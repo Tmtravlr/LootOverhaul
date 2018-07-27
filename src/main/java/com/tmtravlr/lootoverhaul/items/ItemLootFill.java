@@ -65,19 +65,19 @@ public class ItemLootFill extends ItemLoot {
 	public static final Item INSTANCE = new ItemLootFill().setUnlocalizedName("loot_fill").setRegistryName("loot_fill");
 
 	@Override
-	protected void generateSpecificLoot(ItemStack item, World world, Vec3d position) {
-		if (!item.hasTagCompound() || !item.getTagCompound().hasKey("Size", 10) || !item.getTagCompound().hasKey("Blocks", 9)) {
+	protected void generateSpecificLoot(ItemStack stack, World world, Vec3d position) {
+		if (!stack.hasTagCompound() || !stack.getTagCompound().hasKey("Size", 10) || !stack.getTagCompound().hasKey("Blocks", 9)) {
 			return;
 		}
 		
-		int sizeX = item.getTagCompound().getCompoundTag("Size").getInteger("X");
-		int sizeY = item.getTagCompound().getCompoundTag("Size").getInteger("Y");
-		int sizeZ = item.getTagCompound().getCompoundTag("Size").getInteger("Z");
-		String axis = item.getTagCompound().hasKey("Axis") ? item.getTagCompound().getString("Axis") : "Y";
+		int sizeX = stack.getTagCompound().getCompoundTag("Size").getInteger("X");
+		int sizeY = stack.getTagCompound().getCompoundTag("Size").getInteger("Y");
+		int sizeZ = stack.getTagCompound().getCompoundTag("Size").getInteger("Z");
+		String axis = stack.getTagCompound().hasKey("Axis") ? stack.getTagCompound().getString("Axis") : "Y";
 		
-		FillShape fillShape = FillShape.getFillShapeOrDefault(item.getTagCompound().getString("Shape"));
+		FillShape fillShape = FillShape.getFillShapeOrDefault(stack.getTagCompound().getString("Shape"));
 		
-		NBTTagList blockWeightTags = item.getTagCompound().getTagList("Blocks", 10);
+		NBTTagList blockWeightTags = stack.getTagCompound().getTagList("Blocks", 10);
 		ArrayList<WeightedBlockInfo> weightedBlocks = new ArrayList<>();
 		int weightTotal = 0;
 		
@@ -142,7 +142,7 @@ public class ItemLootFill extends ItemLoot {
 						continue;
 					}
 					
-					if (item.getTagCompound().getBoolean("Keep") && !world.getBlockState(pos).getMaterial().isReplaceable()) {
+					if (stack.getTagCompound().getBoolean("Keep") && !world.getBlockState(pos).getMaterial().isReplaceable()) {
 						continue;
 					}
 					
@@ -198,12 +198,10 @@ public class ItemLootFill extends ItemLoot {
 		
 		pos.release();
 	}
-	
-
 
 	@Override
     public String getItemStackDisplayName(ItemStack stack) {
-        return super.getItemStackDisplayName(stack) + ((stack.hasTagCompound() && stack.getTagCompound().hasKey("Shape", 8)) ? stack.getTagCompound().getString("Shape") : "Cube");
+        return super.getItemStackDisplayName(stack) + " - " + ((stack.hasTagCompound() && stack.getTagCompound().hasKey("Shape", 8)) ? stack.getTagCompound().getString("Shape") : "Cube");
     }
 	
 	private class WeightedBlockInfo {

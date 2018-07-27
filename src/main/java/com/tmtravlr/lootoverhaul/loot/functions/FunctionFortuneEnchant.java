@@ -34,7 +34,7 @@ import net.minecraft.world.storage.loot.functions.LootingEnchantBonus;
  *				"max": 1
  *			},
  *  	}
- *  ]
+ * ]
  * 
  * @author Tmtravlr (Rebeca Rey)
  * @since September 2017
@@ -90,8 +90,7 @@ public class FunctionFortuneEnchant extends LootFunction {
         }
 
         public FunctionFortuneEnchant deserialize(JsonObject object, JsonDeserializationContext deserializationContext, LootCondition[] conditionsIn) {
-            int i = JsonUtils.getInt(object, "limit", 0);
-            return new FunctionFortuneEnchant(conditionsIn, (RandomValueRange)JsonUtils.deserializeClass(object, "count", deserializationContext, RandomValueRange.class), i);
+            return new FunctionFortuneEnchant(conditionsIn, (RandomValueRange)JsonUtils.deserializeClass(object, "count", deserializationContext, RandomValueRange.class), JsonUtils.getInt(object, "limit", 0));
         }
     }
 

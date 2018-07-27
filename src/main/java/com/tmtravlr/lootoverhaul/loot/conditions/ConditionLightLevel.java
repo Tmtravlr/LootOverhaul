@@ -18,13 +18,13 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 
 /**
- * Checks the light level, either for sunlight, blocks, or overall light level
+ * Checks the light level, either for the sky, blocks (like torches), or combined (highest of the two)
  * 
  * Example Usage: In high sunlight
  * "conditions": [
  *  	{
  *  		"condition": "lootoverhaul:light_level",
- *  		"type": "sun",
+ *  		"type": "SKY",
  *  		"level": {
  *  			"min": 10
  *  		}
@@ -35,7 +35,7 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
  * "conditions": [
  *  	{
  *  		"condition": "lootoverhaul:light_level",
- *  		"type": "block",
+ *  		"type": "BLOCK",
  *  		"level": {
  *  			"max": 5
  *  		}
@@ -46,7 +46,7 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
  * "conditions": [
  *  	{
  *  		"condition": "lootoverhaul:light_level",
- *  		"type": "overall",
+ *  		"type": "COMBINED",
  *  		"level": 0
  *  	}
  *  ]
@@ -101,7 +101,7 @@ public class ConditionLightLevel implements LootCondition {
         		try {
         			type = LightType.valueOf(JsonUtils.getString(json, "type").toUpperCase());
         		} catch (IllegalArgumentException e) {
-        			throw new JsonSyntaxException("Unknown light type. Try using 'sky', 'block', or 'combined'.", e);
+        			throw new JsonSyntaxException("Unknown light type. Try using SKY, BLOCK, or COMBINED.", e);
         		}
         	}
         	

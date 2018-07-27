@@ -1,22 +1,17 @@
 package com.tmtravlr.lootoverhaul.loot;
 
-import java.io.IOException;
-
 import javax.annotation.Nullable;
 
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Enchantments;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.loot.LootContext;
-import net.minecraft.world.storage.loot.LootTableManager;
 
 /**
  * 
@@ -41,7 +36,7 @@ public class LootContextExtended extends LootContext {
     //TODO: Block destroyed by explosion? Maybe as a loot condition?
 	
     public LootContextExtended(LootContext previous, DamageSource sourceIn, BlockPos posIn, Entity looterIn, TileEntity lootedTileEntityIn, 
-    		TileEntity brokenTileEntityIn, IBlockState brokenStateIn, int fortuneIn, boolean silkTouchIn) {
+    		TileEntity brokenTileEntityIn, IBlockState brokenStateIn, Integer fortuneIn, Boolean silkTouchIn) {
     	
     	super(previous.getLuck(), previous.getWorld(), previous.getLootTableManager(), previous.getLootedEntity(), 
     			previous.getKillerPlayer() instanceof EntityPlayer ? (EntityPlayer)previous.getKillerPlayer() : null, sourceIn);
@@ -52,8 +47,8 @@ public class LootContextExtended extends LootContext {
     	this.lootedTileEntity = lootedTileEntityIn;
     	this.brokenTileEntity = brokenTileEntityIn;
     	this.brokenState = brokenStateIn;
-    	this.fortune = fortuneIn;
-    	this.silkTouch = silkTouchIn;
+    	this.fortune = fortuneIn != null ? fortuneIn : (this.looter != null  && (this.looter instanceof EntityLivingBase)) ? EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, ((EntityLivingBase)looter).getHeldItemMainhand()) : 0;
+    	this.silkTouch = silkTouchIn != null ? silkTouchIn : (this.looter != null  && (this.looter instanceof EntityLivingBase)) ? EnchantmentHelper.getEnchantmentLevel(Enchantments.SILK_TOUCH, ((EntityLivingBase)looter).getHeldItemMainhand()) > 0 : false;
     	this.pos = posIn != null ? posIn : this.looter != null ? this.looter.getPosition() : this.lootedTileEntity != null ? this.lootedTileEntity.getPos() : this.brokenTileEntity != null ? this.brokenTileEntity.getPos() : null;
     }
     
@@ -132,8 +127,6 @@ public class LootContextExtended extends LootContext {
                 return this.getKillerPlayer();
             case LOOTER:
                 return this.getLooter();
-            case LOOTER_PLAYER:
-                return this.getLooterPlayer();
             default:
                 return null;
         }
@@ -143,21 +136,16 @@ public class LootContextExtended extends LootContext {
     	THIS(EntityTarget.THIS),
         KILLER(EntityTarget.KILLER),
         KILLER_PLAYER(EntityTarget.KILLER_PLAYER),
-        LOOTER(EntityTarget.KILLER),
-        LOOTER_PLAYER(EntityTarget.KILLER_PLAYER);
+        LOOTER(EntityTarget.KILLER, EntityTarget.KILLER_PLAYER);
 
-        private final EntityTarget oldTargetType;
+        private final EntityTarget[] oldTargetTypes;
 
-        private ExtendedEntityTarget() {
-            this(null);
-        }
-
-        private ExtendedEntityTarget(EntityTarget oldTargetType) {
-            this.oldTargetType = oldTargetType;
+        private ExtendedEntityTarget(EntityTarget ... oldTargetTypes) {
+            this.oldTargetTypes = oldTargetTypes;
         }
         
-        public EntityTarget getEntityTarget() {
-        	return this.oldTargetType;
+        public EntityTarget[] getEntityTargets() {
+        	return this.oldTargetTypes;
         }
     }
 

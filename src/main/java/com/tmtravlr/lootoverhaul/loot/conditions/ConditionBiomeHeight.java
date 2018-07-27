@@ -69,9 +69,11 @@ public class ConditionBiomeHeight implements LootCondition {
 			if(!variation.isInRange(biome.getHeightVariation())) {
 				return false;
 			}
+		
+			return true;
 		}
 		
-		return true;
+		return false;
 	}
 
 	public static class Serializer extends LootCondition.Serializer<ConditionBiomeHeight> {

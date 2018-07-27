@@ -1,6 +1,10 @@
 package com.tmtravlr.lootoverhaul.loot.conditions;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
@@ -16,17 +20,16 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 
 /**
- * Will pass if this is the current world's weather. Must be 'clear',
- * 'rain', or 'thunder'. Rain also means snow if it's snowing (raining
- * with a temperature below 0.15).
+ * Will pass if this is the weather at the loot's position.
  * 
  * Example Usage: (only applies if in rainy, snowy, or stormy weather)
  * "conditions": [
  *  	{
  *  		"condition": "lootoverhaul:weather",
  *  		"weather": [
- *  			"rain",
- *  			"thunder"
+ *  			"RAIN",
+ *  			"SNOW",
+ *  			"THUNDER"
  *  		]
  *  	}
  *  ]
@@ -34,7 +37,7 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
  * "conditions": [
  *  	{
  *  		"condition": "lootoverhaul:weather",
- *  		"weather": "clear"
+ *  		"weather": "CLEAR"
  *  	}
  *  ]
  * 
@@ -43,21 +46,35 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
  */
 public class ConditionWeather implements LootCondition {
 
-	private String[] weatherTypes;
+	private List<WeatherType> weatherTypes;
 
-    public ConditionWeather(String[] weatherToSet) {
+    public ConditionWeather(List<WeatherType> weatherToSet) {
         this.weatherTypes = weatherToSet;
     }
 	
 	@Override
 	public boolean testCondition(Random rand, LootContext context) {
 		BlockPos pos = LootHelper.getPosFromContext(context);
-		Biome biome = pos != null ? context.getWorld().getBiome(pos) : null;
-		boolean rain = context.getWorld().isRaining() && (biome == null || biome.getEnableSnow() || biome.canRain());
+		boolean rain = context.getWorld().isRaining();
+		boolean snow = false;
+		boolean overcast = false;
+		
+		if (pos != null) {
+			Biome biome =context.getWorld().getBiome(pos);
+			rain = context.getWorld().isRainingAt(pos);
+			snow = context.getWorld().isRaining() && context.getWorld().canSnowAt(pos, false);
+			overcast = context.getWorld().isRaining() && !biome.canRain();
+		}
+		
 		boolean thunder = context.getWorld().isThundering();
+		boolean clear = !rain && !snow && !overcast && !thunder;
 				
-		for(String weather : weatherTypes) {
-			if((weather.equalsIgnoreCase("rain") && rain) || (weather.equalsIgnoreCase("thunder") && thunder) || (weather.equalsIgnoreCase("clear") && !rain && !thunder)) {
+		for(WeatherType weather : weatherTypes) {
+			if((weather == WeatherType.CLEAR && clear) || 
+					(weather == WeatherType.OVERCAST && overcast) ||
+					(weather == WeatherType.RAIN && rain) ||
+					(weather == WeatherType.SNOW && snow) ||
+					(weather == WeatherType.THUNDER && thunder)) {
 				
 				return true;
 			}
@@ -74,25 +91,36 @@ public class ConditionWeather implements LootCondition {
 
         public void serialize(JsonObject json, ConditionWeather value, JsonSerializationContext context) {
         	
-        	LootHelper.serializeStringArray(value.weatherTypes, json, "weather");
+        	LootHelper.serializeStringArray(value.weatherTypes.stream().map(WeatherType::name).collect(Collectors.toList()).toArray(new String[0]), json, "weather");
         }
 
         public ConditionWeather deserialize(JsonObject json, JsonDeserializationContext context) {
         	
         	String[] weatherStrings = LootHelper.deserializeStringArray(json, "weather");
-        	checkNames(weatherStrings);
+        	List<WeatherType> weatherTypes = new ArrayList<WeatherType>();
+        	
+        	Arrays.stream(weatherStrings).forEach(name -> {
+        		try {
+        			weatherTypes.add(WeatherType.valueOf(name.toUpperCase()));
+        		} catch (IllegalArgumentException e) {
+        			throw new JsonSyntaxException("Weather type '"+name+"' not recognized; it must be CLEAR, OVERCAST, RAIN, SNOW, or THUNDER.");
+        		}
+        	});
 
-            return new ConditionWeather(weatherStrings);
+            return new ConditionWeather(weatherTypes);
         }
         
         private void checkNames(String[] weatherStrings) {
-        	for(String weatherString : weatherStrings) {
-	        	if(!weatherString.equalsIgnoreCase("clear") && !weatherString.equalsIgnoreCase("rain") && !weatherString.equalsIgnoreCase("thunder")) {
-	        		throw new JsonSyntaxException("Weather type '"+weatherString+"' not recognized; it must be 'clear', 'rain', or 'thunder'.");
-	        	}
         	
-        	}
         }
     }
+	
+	private enum WeatherType {
+		CLEAR,
+		OVERCAST,
+		RAIN,
+		SNOW,
+		THUNDER
+	}
 
 }

@@ -9,7 +9,7 @@ import com.google.gson.JsonSerializationContext;
 import com.tmtravlr.lootoverhaul.LootOverhaul;
 import com.tmtravlr.lootoverhaul.loot.LootHelper;
 import com.tmtravlr.lootoverhaul.loot.LootHelper.RangeFloat;
-import com.tmtravlr.lootoverhaul.misc.BlockStateMatcher;
+import com.tmtravlr.lootoverhaul.utilities.BlockStateMatcher;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -20,7 +20,7 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 
 /**
- * Explanation
+ * Will pass if the blocks are found within the given radius
  * 
  * Example Usage: Within 0 blocks of (so inside) water or lava
  * "conditions": [

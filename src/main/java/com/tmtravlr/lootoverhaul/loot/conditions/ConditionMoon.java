@@ -14,24 +14,24 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 
 /**
- * Explanation
+ * Will pass if the moon is in one of these phases.
  * 
  * Example Usage: During a full moon
  * "conditions": [
  *  	{
- *  		"condition": "lootoverhaul:moon_phase"
- *  		"phase": "full"
+ *  		"condition": "lootoverhaul:moon_phase",
+ *  		"phase": "FULL"
  *  	}
  *  ]
  *  
  * Example Usage: During a crecent moon
  * "conditions": [
  *  	{
- *  		"condition": "lootoverhaul:moon_phase"
- *  		"phase": {
- *  			"waxing_crecent",
- *  			"waning_crecent"
- * 			}
+ *  		"condition": "lootoverhaul:moon_phase",
+ *  		"phase": [
+ *  			"WAXING_CRECENT",
+ *  			"WANING_CRECENT"
+ * 			]
  *  	}
  *  ]
  * 
@@ -81,7 +81,7 @@ public class ConditionMoon implements LootCondition {
         	for (int i = 0; i < phaseStrings.length; i++) {
         		MoonPhase phase = MoonPhase.valueOf(phaseStrings[i].toUpperCase());
         		if (phase == null) {
-        			throw new JsonSyntaxException("Moon phase '"+phaseStrings[i]+"' not recognized; it must be 'new', 'waxing_crecent', 'first_quarter', 'waxing_gibbous', 'full', 'waning_gibbous', 'last_quarter', or 'waning_crecent'.");
+        			throw new JsonSyntaxException("Moon phase '"+phaseStrings[i]+"' not recognized; it must be NEW, WAXING_CRECENT, FIRST_QUARTER, WAXING_GIBBOUS, FULL, WANING_GIBBOUS, LAST_QUARTER, or WANING_CRECENT.");
         		}
         		phases[i] = phase;
         	}

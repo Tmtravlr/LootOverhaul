@@ -35,7 +35,7 @@ public class BlockLootManager {
 		TileEntity tileEntity = world.getTileEntity(pos);
 		
 		if (tileEntity instanceof ITileEntityLootable) {
-			return ((ITileEntityLootable)tileEntity).getRand();
+			return ((ITileEntityLootable)tileEntity).getRNG();
 		}
 		
 		return rand;

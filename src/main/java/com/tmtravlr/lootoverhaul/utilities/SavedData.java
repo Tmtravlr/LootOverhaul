@@ -1,4 +1,4 @@
-package com.tmtravlr.lootoverhaul.misc;
+package com.tmtravlr.lootoverhaul.utilities;
 
 import java.util.ArrayList;
 import java.util.HashMap;

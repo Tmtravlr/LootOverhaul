@@ -67,7 +67,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  *  		{
  *  			"function": "lootoverhaul:replace_nbt",
  *  			"replace": "#looter",
- *  			"target": "looter"
+ *  			"uuid": "looter"
  *  		}
  *  	]
  *  }
@@ -131,7 +131,7 @@ public class ItemLootCommand extends ItemLoot {
 
         if (commandName != null)
         {
-            name = name + " " + commandName;
+            name += " - " + commandName;
         }
 
         return name;

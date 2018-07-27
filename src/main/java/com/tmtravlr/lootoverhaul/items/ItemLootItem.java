@@ -21,15 +21,15 @@ import net.minecraft.world.World;
  */
 public class ItemLootItem extends ItemLoot {
 
-	public static final Item INSTANCE = new ItemLootBlock().setUnlocalizedName("loot_item").setRegistryName("loot_item");
+	public static final Item INSTANCE = new ItemLootItem().setUnlocalizedName("loot_item").setRegistryName("loot_item");
 
 	@Override
 	protected void generateSpecificLoot(ItemStack item, World world, Vec3d position) {
-		if (!(item.hasTagCompound() && item.getTagCompound().hasKey("ItemStack", 10))) {
+		if (!(item.hasTagCompound() && item.getTagCompound().hasKey("Item", 10))) {
 			return;
 		}
 		
-		ItemStack storedStack = new ItemStack(item.getTagCompound().getCompoundTag("ItemStack"));
+		ItemStack storedStack = new ItemStack(item.getTagCompound().getCompoundTag("Item"));
 		EntityItem entityItem = new EntityItem(world, position.x, position.y, position.z, storedStack);
 		entityItem.setDefaultPickupDelay();
 		
@@ -49,12 +49,12 @@ public class ItemLootItem extends ItemLoot {
     public String getItemStackDisplayName(ItemStack stack) {
         String name = super.getItemStackDisplayName(stack);
         
-    	NBTTagCompound stackTag = (stack.hasTagCompound() && stack.getTagCompound().hasKey("ItemStack", 10)) ? stack.getTagCompound().getCompoundTag("ItemStack") : null;
+    	NBTTagCompound stackTag = (stack.hasTagCompound() && stack.getTagCompound().hasKey("Item", 10)) ? stack.getTagCompound().getCompoundTag("Item") : null;
     	
-    	if (stackTag!= null) {
+    	if (stackTag != null) {
     		ItemStack storedStack = new ItemStack(stackTag);
     		
-    		name += storedStack.getDisplayName();
+    		name += " - " + storedStack.getDisplayName();
     	}
 
         return name;

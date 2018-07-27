@@ -22,9 +22,9 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
  * Example Usage:
  * "conditions": [
  *  	{
- *  		"condition": "lootoverhaul:biome_humidity"
+ *  		"condition": "lootoverhaul:biome_humidity",
  *  		"humidity": {
- *  			"min": 0.7
+ *  			"min": 0.7,
  *  			"max": 1.0
  *  		}
  *  	}

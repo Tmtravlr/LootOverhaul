@@ -20,6 +20,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -40,8 +41,8 @@ public class ItemTriggerCommand extends Item {
 			NBTTagCompound tag = stack.getTagCompound();
 			if (tag != null && tag.getBoolean("Unwrap") == false) {
 				
-				if (tag.getInteger("Delay") > 0) {
-					tag.setInteger("Delay", tag.getInteger("Delay") - 1);
+				if (tag.getInteger("CurrentDelay") > 0) {
+					tag.setInteger("CurrentDelay", tag.getInteger("CurrentDelay") - 1);
 					return;
 				}
 				
@@ -58,7 +59,7 @@ public class ItemTriggerCommand extends Item {
 	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
 		ItemStack stack = player.getHeldItem(hand);
 		
-		if (!world.isRemote) {
+		if (!world.isRemote && stack.hasTagCompound() && stack.getTagCompound().getBoolean("Unwrap")) {
 			runCommands(stack, player);
 		}
 		
@@ -88,8 +89,8 @@ public class ItemTriggerCommand extends Item {
 					thisItem.removeTag("Next");
 					tag = tag.getCompoundTag("Next");
 					
-					if (tag.hasKey("DelayMax", 3)) {
-						tag.setInteger("Delay", tag.getInteger("DelayMax"));
+					if (tag.hasKey("Delay", 3)) {
+						tag.setInteger("CurrentDelay", tag.getInteger("Delay"));
 					}
 					
 					NBTTagCompound lastTag = tag;
@@ -112,4 +113,9 @@ public class ItemTriggerCommand extends Item {
 		}
 
 	}
+	
+	@Override
+    public String getItemStackDisplayName(ItemStack stack) {
+        return super.getItemStackDisplayName(stack) + ((stack.hasTagCompound() && stack.getTagCompound().hasKey("Unwrap")) ? (" " + I18n.translateToLocal("item.triggers.unwrap")) : "");
+    }
 }

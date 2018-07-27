@@ -3,7 +3,7 @@ package com.tmtravlr.lootoverhaul.items;
 import java.util.Random;
 
 import com.tmtravlr.lootoverhaul.LootOverhaul;
-import com.tmtravlr.lootoverhaul.misc.SavedData;
+import com.tmtravlr.lootoverhaul.utilities.SavedData;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
@@ -32,30 +32,19 @@ public abstract class ItemLoot extends Item {
 		this.setMaxStackSize(1);
 	}
 	
-	public static ItemStack createStackFromItem(ItemStack original) {
-		NBTTagCompound originalTag = new NBTTagCompound();
-		originalTag = original.writeToNBT(originalTag);
-		
-		ItemStack newLootStack = new ItemStack(ItemLootItem.INSTANCE);
-		newLootStack.setTagCompound(new NBTTagCompound());
-		newLootStack.getTagCompound().setTag("Item", originalTag);
-		
-		return newLootStack;
-	}
-	
 	@Override
     public boolean onEntityItemUpdate(EntityItem entityItem) {
-    	if(!entityItem.world.isRemote) {
+    	if(!entityItem.world.isRemote && entityItem.ticksExisted > 5) {
 			//Sanity checks
-	    	if(entityItem == null || entityItem.getItem() == null || entityItem.getItem().getItem() == null || !entityItem.getItem().hasTagCompound()) {
+	    	if(entityItem == null || entityItem.getItem().isEmpty() || !entityItem.getItem().hasTagCompound()) {
 	    		entityItem.setDead();
 	    		return true;
 	    	}
 	    	
 	    	this.generateLoot(entityItem.getItem(), entityItem.world, entityItem.getPositionVector());
+	    	entityItem.setDead();
 		}
         
-    	entityItem.setDead();
 		return true;
     }
 	
@@ -63,20 +52,19 @@ public abstract class ItemLoot extends Item {
     public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
     	if(!world.isRemote) {
 			this.generateLoot(stack, world, entity.getPositionVector());
-			stack.setCount(0);
 		}
     }
 	
-	public void generateLoot(ItemStack item, World world, Vec3d position) {
-		if (!item.hasTagCompound()) {
+	public void generateLoot(ItemStack stack, World world, Vec3d position) {
+		if (!stack.hasTagCompound() || stack.isEmpty()) {
 			return;
 		}
 		
-		if (item.getTagCompound().hasKey("Delay")) {
-			int delay = item.getTagCompound().getInteger("Delay");
-			item.getTagCompound().removeTag("Delay");
+		if (stack.getTagCompound().hasKey("Delay")) {
+			int delay = stack.getTagCompound().getInteger("Delay");
+			stack.getTagCompound().removeTag("Delay");
 			if (delay > 0) {
-				NBTTagCompound positionTag = item.getTagCompound().getCompoundTag("Position");
+				NBTTagCompound positionTag = stack.getTagCompound().getCompoundTag("Position");
 				
 				if (!positionTag.hasKey("X")) {
 					positionTag.setDouble("X", position.x);
@@ -88,16 +76,16 @@ public abstract class ItemLoot extends Item {
 					positionTag.setDouble("Z", position.z);
 				}
 				
-				item.getTagCompound().setTag("Position", positionTag);
+				stack.getTagCompound().setTag("Position", positionTag);
 				
 				SavedData savedData = SavedData.getSavedData(world);
-				savedData.setLootDelay(item, delay);
+				savedData.setLootDelay(stack, delay);
 			}
 			return;
 		}
 		
-		if (item.getTagCompound().hasKey("Position", 10)) {
-			NBTTagCompound positionTag = item.getTagCompound().getCompoundTag("Position");
+		if (stack.getTagCompound().hasKey("Position", 10)) {
+			NBTTagCompound positionTag = stack.getTagCompound().getCompoundTag("Position");
 			if (positionTag.hasKey("Entity")) {
 				String entityString = positionTag.getString("Entity");
 				Entity entity = null;
@@ -130,8 +118,8 @@ public abstract class ItemLoot extends Item {
 			}
 		}
 		
-		if (item.getTagCompound().hasKey("Offset", 10)) {
-			NBTTagCompound positionTag = item.getTagCompound().getCompoundTag("Offset");
+		if (stack.getTagCompound().hasKey("Offset", 10)) {
+			NBTTagCompound positionTag = stack.getTagCompound().getCompoundTag("Offset");
 			if (positionTag.hasKey("X") || positionTag.hasKey("Y") || positionTag.hasKey("Z")) {
 				float offsetX = positionTag.getFloat("X");
 				float offsetY = positionTag.getFloat("Y");
@@ -154,13 +142,13 @@ public abstract class ItemLoot extends Item {
 				int maxSearch = positionTag.getInteger("SurfaceSearch");
 				
 				BlockPos startPos = new BlockPos(position);
-				BlockPos.PooledMutableBlockPos searchPos = BlockPos.PooledMutableBlockPos.retain(startPos);
+				BlockPos searchPos;
 				
-				if (!(world.getBlockState(searchPos.down()).isSideSolid(world, searchPos.down(), EnumFacing.UP) && world.getBlockState(searchPos).getMaterial().isReplaceable())) {
+				if (!(world.getBlockState(startPos.down()).isSideSolid(world, startPos.down(), EnumFacing.UP) && world.getBlockState(startPos).getMaterial().isReplaceable())) {
 					boolean foundPos = false;
 					for (int ySearch = 0; ySearch < maxSearch && !foundPos; ySearch++) {
 						for (int yDirection : new int[]{1, -1}) {
-							searchPos.setY(startPos.getY() + ySearch*yDirection);
+							searchPos = startPos.add(0, ySearch*yDirection, 0);
 							IBlockState state = world.getBlockState(searchPos);
 							if (world.getBlockState(searchPos.down()).isSideSolid(world, searchPos.down(), EnumFacing.UP) && (state.getMaterial().isReplaceable() || state.getCollisionBoundingBox(world, searchPos) == null)) {
 								position.addVector(0, ySearch*yDirection, 0);
@@ -170,14 +158,23 @@ public abstract class ItemLoot extends Item {
 						}
 					}
 				}
-				
-				searchPos.release();
 			}
 		}
 		
-		this.generateSpecificLoot(item, world, position);
+		this.generateSpecificLoot(stack, world, position);
+		stack.setCount(0);
 	}
 	
-	protected abstract void generateSpecificLoot(ItemStack item, World world, Vec3d position);
+	protected abstract void generateSpecificLoot(ItemStack stack, World world, Vec3d position);
+	
+	public static ItemStack createStackFromItem(ItemStack original) {
+		NBTTagCompound originalTag = original.writeToNBT(new NBTTagCompound());
+		
+		ItemStack newLootStack = new ItemStack(ItemLootItem.INSTANCE);
+		newLootStack.setTagCompound(new NBTTagCompound());
+		newLootStack.getTagCompound().setTag("Item", originalTag);
+		
+		return newLootStack;
+	}
 	
 }

@@ -18,59 +18,56 @@ import net.minecraft.world.storage.loot.conditions.LootConditionManager;
 import net.minecraftforge.fml.common.FMLLog;
 
 /**
- * Will pass of any of its conditions pass
+ * Will pass of all if its conditions pass
  * 
- * Example Usage: (will pass if in a 'watery' biome or it's raining/storming)
+ * Example Usage: (will pass if in a 'sandy' biome and it's clear out)
  * "conditions": [
  *  	{
- *  		"condition": "lootoverhaul:or",
+ *  		"condition": "lootoverhaul:and",
  *  		"conditions": [
  *  			{
  *  				"condition": "lootoverhaul:in_biome_type",
  *  				"biome_types": [
- *  					"WATER"
+ *  					"SANDY"
  *  				]
  *  			},
  *  			{
  *  				"condition": "lootoverhaul:weather",
- *  				"weather": [
- *  					"RAIN",
- *  					"THUNDER"
- *  				]
+ *  				"weather": "CLEAR"
  *  			}
  *  		]
  *  	}
  *  ]
  * 
  * @author Tmtravlr (Rebeca Rey)
- * @since November 2016
+ * @since March 2018
  */
-public class ConditionOr implements LootCondition {
+public class ConditionAnd implements LootCondition {
 
 	private final LootCondition[] conditions;
 
-    public ConditionOr(LootCondition[] conditionList) {
+    public ConditionAnd(LootCondition[] conditionList) {
         this.conditions = conditionList;
     }
 	
 	@Override
 	public boolean testCondition(Random rand, LootContext context) {
 		for (LootCondition condition : conditions) {
-			if (condition.testCondition(rand, context)) {
-				return true;
+			if (!condition.testCondition(rand, context)) {
+				return false;
 			}
 		}
 		
-		return false;
+		return true;
 	}
 
-    public static class Serializer extends LootCondition.Serializer<ConditionOr> {
+    public static class Serializer extends LootCondition.Serializer<ConditionAnd> {
     	
         public Serializer() {
-            super(new ResourceLocation(LootOverhaul.MOD_ID, "or"), ConditionOr.class);
+            super(new ResourceLocation(LootOverhaul.MOD_ID, "and"), ConditionAnd.class);
         }
 
-        public void serialize(JsonObject json, ConditionOr value, JsonSerializationContext context) {
+        public void serialize(JsonObject json, ConditionAnd value, JsonSerializationContext context) {
         	
             JsonArray conditionList = new JsonArray();
             
@@ -84,7 +81,7 @@ public class ConditionOr implements LootCondition {
             json.add("conditions", conditionList);
         }
 
-        public ConditionOr deserialize(JsonObject json, JsonDeserializationContext context) {
+        public ConditionAnd deserialize(JsonObject json, JsonDeserializationContext context) {
         	
             JsonArray conditionArray = JsonUtils.getJsonArray(json, "conditions");
             LootCondition[] conditionList = new LootCondition[conditionArray.size()];
@@ -96,7 +93,7 @@ public class ConditionOr implements LootCondition {
             	}
             }
 
-            return new ConditionOr(conditionList);
+            return new ConditionAnd(conditionList);
         }
     }
 

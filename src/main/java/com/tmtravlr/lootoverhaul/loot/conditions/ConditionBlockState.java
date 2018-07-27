@@ -6,11 +6,12 @@ import java.util.Random;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSyntaxException;
 import com.tmtravlr.lootoverhaul.LootOverhaul;
 import com.tmtravlr.lootoverhaul.loot.LootContextExtended;
 import com.tmtravlr.lootoverhaul.loot.LootHelper;
 import com.tmtravlr.lootoverhaul.loot.LootHelper.RangeFloat;
-import com.tmtravlr.lootoverhaul.misc.BlockStateMatcher;
+import com.tmtravlr.lootoverhaul.utilities.BlockStateMatcher;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -20,7 +21,8 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 
 /**
- * Explanation
+ * Will pass if the state of the block broken or looted from matches the
+ * metadata or state given.
  * 
  *  A metadata of 1
  * "conditions": [
@@ -156,6 +158,10 @@ public class ConditionBlockState implements LootCondition {
         	}
         	if (json.has("state")) {
         		states = BlockStateMatcher.deserialize(json, "state");
+        	}
+        	
+        	if (metaRange == null && metaList == null && states == null) {
+        		throw new JsonSyntaxException("Expected one or both fields 'state' and 'meta'");
         	}
         	
         	return new ConditionBlockState(metaRange, metaList, states);

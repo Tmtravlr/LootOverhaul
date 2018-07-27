@@ -10,8 +10,8 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 import com.tmtravlr.lootoverhaul.LootOverhaul;
-import com.tmtravlr.lootoverhaul.misc.SavedData;
-import com.tmtravlr.lootoverhaul.misc.SavedData.*;
+import com.tmtravlr.lootoverhaul.utilities.SavedData;
+import com.tmtravlr.lootoverhaul.utilities.SavedData.*;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;

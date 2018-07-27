@@ -68,19 +68,19 @@ public class ItemLootBlock extends ItemLoot {
 	public static final Item INSTANCE = new ItemLootBlock().setUnlocalizedName("loot_block").setRegistryName("loot_block");
 
 	@Override
-	protected void generateSpecificLoot(ItemStack item, World world, Vec3d position) {
+	protected void generateSpecificLoot(ItemStack stack, World world, Vec3d position) {
 		BlockPos pos = new BlockPos(position);
-    	ResourceLocation blockLocation = new ResourceLocation(item.getTagCompound().getString("Block"));
-    	boolean noUpdate = item.getTagCompound().getBoolean("NoUpdate");
-    	NBTTagCompound tileTag = item.getTagCompound().hasKey("BlockEntityTag", 10) ? item.getTagCompound().getCompoundTag("BlockEntityTag") : null;
+    	ResourceLocation blockLocation = new ResourceLocation(stack.getTagCompound().getString("Block"));
+    	boolean noUpdate = stack.getTagCompound().getBoolean("NoUpdate");
+    	NBTTagCompound tileTag = stack.getTagCompound().hasKey("BlockEntityTag", 10) ? stack.getTagCompound().getCompoundTag("BlockEntityTag") : null;
     	
     	Block block = Block.REGISTRY.getObject(blockLocation);
     	IBlockState state = block.getDefaultState();
     	
-    	if (item.getTagCompound().hasKey("Meta")) {
-    		state = block.getStateFromMeta(item.getTagCompound().getInteger("Meta"));
-    	} else if (item.getTagCompound().hasKey("State")) {
-    		state = LootHelper.getStateFromNBT(block, item.getTagCompound().getCompoundTag("State"));
+    	if (stack.getTagCompound().hasKey("Meta")) {
+    		state = block.getStateFromMeta(stack.getTagCompound().getInteger("Meta"));
+    	} else if (stack.getTagCompound().hasKey("State")) {
+    		state = LootHelper.getStateFromNBT(block, stack.getTagCompound().getCompoundTag("State"));
     	}
     	
     	if(block != null && !(block == Blocks.AIR && !blockLocation.toString().equals("minecraft:air"))) {
@@ -116,11 +116,11 @@ public class ItemLootBlock extends ItemLoot {
         		
         		if (item != null) {
         			int data = stack.getTagCompound().getInteger("Meta");
-        			name += (new ItemStack(item, 1, data)).getDisplayName();
+        			name += " - " + (new ItemStack(item, 1, data)).getDisplayName();
         		}
         		else {
         	
-        			name += I18n.translateToLocal(block.getUnlocalizedName() + ".name");
+        			name += " - " + I18n.translateToLocal(block.getUnlocalizedName() + ".name");
         		}
         	}
         }

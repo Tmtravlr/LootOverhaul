@@ -32,18 +32,18 @@ import net.minecraft.world.storage.loot.functions.LootFunction;
  *  		"function": "lootoverhaul:position",
  *  		"entity": "looter"
  *  	}
- *  ]
- *  
- *  Entity: Will set the loot's position to the nearest player
+ * ]
+ * 
+ * Entity: Will set the loot's position to the nearest player
  * 
  * "functions": [
  *  	{
  *  		"function": "lootoverhaul:position",
- *  		"entity": "@p"
+ *  		"selector": "@p"
  *  	}
- *  ]
- *  
- *  Static Position: Will set the loot's position to the given position
+ * ]
+ * 
+ * Static Position: Will set the loot's position to the given position
  * 
  * "functions": [
  *  	{
@@ -52,16 +52,16 @@ import net.minecraft.world.storage.loot.functions.LootFunction;
  *  		"y": "64",
  *  		"z": "0"
  *  	}
- *  ]
- *  
- *  Static Position: Just set the y position
+ * ]
+ * 
+ * Static Position: Just set the y position
  * 
  * "functions": [
  *  	{
  *  		"function": "lootoverhaul:position",
  *  		"y": "128"
  *  	}
- *  ]
+ * ]
  * 
  * @author Tmtravlr (Rebeca Rey)
  * @since October 2017
@@ -103,16 +103,16 @@ public class FunctionPosition extends LootFunction {
 			}
 		} else if (this.selector != null) {
 			positionTag.setString("Entity", this.selector);
-		} else {
-			if (posX != null) {
-				positionTag.setDouble("X", posX);
-			}
-			if (posY != null) {
-				positionTag.setDouble("Y", posY);
-			}
-			if (posZ != null) {
-				positionTag.setDouble("Z", posZ);
-			}
+		}
+		
+		if (posX != null) {
+			positionTag.setDouble("X", posX);
+		}
+		if (posY != null) {
+			positionTag.setDouble("Y", posY);
+		}
+		if (posZ != null) {
+			positionTag.setDouble("Z", posZ);
 		}
 		
 		stack.getTagCompound().setTag("Position", positionTag);
@@ -130,7 +130,7 @@ public class FunctionPosition extends LootFunction {
         		LootHelper.serializeExtendedEntityTarget(json, "entity", value.target);
         	}
         	if (value.selector != null) {
-        		json.addProperty("entity", value.selector);
+        		json.addProperty("selector", value.selector);
         	}
         	if (value.posX != null) {
         		json.addProperty("x", value.posX);
@@ -151,22 +151,22 @@ public class FunctionPosition extends LootFunction {
         	Double posY = null;
         	Double posZ = null;
         	
-        	if (json.has("entity")) {
-	        	target = LootHelper.deserializeExtendedEntityTargetOrNull(json, "entity");
+        	if (json.has("target")) {
+	        	target = LootHelper.deserializeExtendedEntityTargetOrNull(json, "target");
 	        	if (target == null) {
-	        		selector = JsonUtils.getString(json, "entity");
+	        		selector = JsonUtils.getString(json, "target");
 	        	}
-        	} else {
-        		if (json.has("x")) {
-        			posX = (double) JsonUtils.getFloat(json, "x");
-        		}
-        		if (json.has("y")) {
-        			posY = (double) JsonUtils.getFloat(json, "y");
-        		}
-        		if (json.has("z")) {
-        			posZ = (double) JsonUtils.getFloat(json, "z");
-        		}
         	}
+
+    		if (json.has("x")) {
+    			posX = (double) JsonUtils.getFloat(json, "x");
+    		}
+    		if (json.has("y")) {
+    			posY = (double) JsonUtils.getFloat(json, "y");
+    		}
+    		if (json.has("z")) {
+    			posZ = (double) JsonUtils.getFloat(json, "z");
+    		}
         	
             return new FunctionPosition(conditionsIn, target, selector, posX, posY, posZ);
         }

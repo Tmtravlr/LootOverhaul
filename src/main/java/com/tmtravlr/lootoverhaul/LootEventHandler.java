@@ -1,52 +1,86 @@
 package com.tmtravlr.lootoverhaul;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
-import com.tmtravlr.lootoverhaul.asm.ObfuscatedNames;
 import com.tmtravlr.lootoverhaul.items.ItemLoot;
-import com.tmtravlr.lootoverhaul.items.ItemTradeEditor;
+import com.tmtravlr.lootoverhaul.items.ItemLootBlock;
+import com.tmtravlr.lootoverhaul.items.ItemLootCommand;
+import com.tmtravlr.lootoverhaul.items.ItemLootEffect;
+import com.tmtravlr.lootoverhaul.items.ItemLootEntity;
+import com.tmtravlr.lootoverhaul.items.ItemLootFill;
+import com.tmtravlr.lootoverhaul.items.ItemLootItem;
+import com.tmtravlr.lootoverhaul.items.ItemLootStructure;
+import com.tmtravlr.lootoverhaul.items.ItemTriggerCommand;
+import com.tmtravlr.lootoverhaul.items.ItemTriggerLoot;
 import com.tmtravlr.lootoverhaul.loot.BlockLootManager;
+import com.tmtravlr.lootoverhaul.loot.ExtraLootManager;
 import com.tmtravlr.lootoverhaul.loot.LootContextExtendedBuilder;
 import com.tmtravlr.lootoverhaul.loot.LootHelper;
-import com.tmtravlr.lootoverhaul.misc.SavedData;
+import com.tmtravlr.lootoverhaul.utilities.SavedData;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootPool;
 import net.minecraft.world.storage.loot.LootTable;
+import net.minecraftforge.client.event.GuiContainerEvent;
 import net.minecraftforge.event.LootTableLoadEvent;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent.HarvestDropsEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent.OnConfigChangedEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
+import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.WorldTickEvent;
 import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.registries.IForgeRegistry;
 
+@Mod.EventBusSubscriber(modid = LootOverhaul.MOD_ID)
 public class LootEventHandler {
 	
-	private boolean loadingExtras = false;
+	private static boolean loadingExtras = false;
+	private static final Map<EntityPlayer, TileEntity> TILE_ENTITY_INTERACTIONS = new HashMap<>();
+	private static final Map<EntityPlayer, Entity> ENTITY_INTERACTIONS = new HashMap<>();
 	
 	@SubscribeEvent
-	public void onWorldTick(WorldTickEvent event) {
+	public static void onRegisterItems(RegistryEvent.Register<Item> event) {
+		IForgeRegistry<Item> registry = event.getRegistry();
+		
+		registry.register(ItemLootItem.INSTANCE);
+		registry.register(ItemLootBlock.INSTANCE);
+		registry.register(ItemLootFill.INSTANCE);
+		registry.register(ItemLootEntity.INSTANCE);
+		registry.register(ItemLootStructure.INSTANCE);
+		registry.register(ItemLootCommand.INSTANCE);
+		registry.register(ItemLootEffect.INSTANCE);
+    	
+		registry.register(ItemTriggerCommand.INSTANCE);
+		registry.register(ItemTriggerLoot.INSTANCE);
+	}
+	
+	@SubscribeEvent
+	public static void onWorldTick(WorldTickEvent event) {
 		if (event.phase == Phase.START && event.side == Side.SERVER) {
 			SavedData savedData = SavedData.getSavedData(event.world);
 			List<ItemStack> expiredLoot = savedData.decrementLootDelays();
@@ -63,13 +97,12 @@ public class LootEventHandler {
 	}
 	
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onEntityJoinWorld(EntityJoinWorldEvent event) {
+    public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof EntityItem) {
             ItemStack stack = ((EntityItem)event.getEntity()).getItem();
             
-            Item item = stack.getItem();
-            if (item instanceof ItemLoot) {
-               ((ItemLoot)item).generateLoot(stack, event.getWorld(), event.getEntity().getPositionVector());
+            if (!stack.isEmpty() && stack.hasTagCompound() && stack.getItem() instanceof ItemLoot) {
+               ((ItemLoot)stack.getItem()).generateLoot(stack, event.getWorld(), event.getEntity().getPositionVector());
                event.getEntity().setDead();
                event.setCanceled(true);
             }
@@ -77,7 +110,7 @@ public class LootEventHandler {
     }
 
     @SubscribeEvent
-    public void onConfigChanged(OnConfigChangedEvent event) {
+    public static void onConfigChanged(OnConfigChangedEvent event) {
         if (event.getModID().equals(LootOverhaul.MOD_ID)) {
             if (ConfigLoader.config != null && (ConfigLoader.config.hasChanged() || !ConfigLoader.config.getConfigFile().exists())) {
                 ConfigLoader.syncConfig();
@@ -86,8 +119,8 @@ public class LootEventHandler {
     }
     
     @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void onBlockDrop(HarvestDropsEvent event) {
-    	if (!(event.getWorld() instanceof WorldServer)) {
+    public static void onBlockDrop(HarvestDropsEvent event) {
+    	if (!(ConfigLoader.enableBlockDrops && event.getWorld() instanceof WorldServer)) {
     		return;
     	}
     	
@@ -146,17 +179,17 @@ public class LootEventHandler {
     }
     
     @SubscribeEvent(priority=EventPriority.HIGH)
-    public void onLivingDrops(LivingDropsEvent event) {
+    public static void onLivingDrops(LivingDropsEvent event) {
     	if (ConfigLoader.enableEntityDropsAll && event.getEntity().world instanceof WorldServer) {
 	    	LootTable lootTable = event.getEntity().world.getLootTableManager().getLootTableFromLocation(LootHelper.ALL_ENTTIIES);
 	    	
 	    	if (lootTable != null) {
 	    		LootContext.Builder builder = new LootContextExtendedBuilder((WorldServer)event.getEntity().world).withLootedEntity(event.getEntity()).withDamageSource(event.getSource());
-	    		int recentlyHit = ObfuscationReflectionHelper.getPrivateValue(EntityLivingBase.class, event.getEntityLiving(), ObfuscatedNames.RECENTLY_HIT_FIELD_SRG, "recentlyHit");
-	    		EntityPlayer attackingPlayer = ObfuscationReflectionHelper.getPrivateValue(EntityLivingBase.class, event.getEntityLiving(), ObfuscatedNames.ATTACKING_PLAYER_FIELD_SRG, "attackingPlayer");
+	    		int recentlyHit = ObfuscationReflectionHelper.getPrivateValue(EntityLivingBase.class, event.getEntityLiving(), "field_70718_bc", "recentlyHit");
+	    		EntityPlayer attackingPlayer = ObfuscationReflectionHelper.getPrivateValue(EntityLivingBase.class, event.getEntityLiving(), "field_70717_bb", "attackingPlayer");
 	    		long deathLootTableSeed = 0L;
 	    		if (event.getEntityLiving() instanceof EntityLiving) {
-	    			deathLootTableSeed = ObfuscationReflectionHelper.getPrivateValue(EntityLiving.class, (EntityLiving)event.getEntityLiving(), ObfuscatedNames.DEATH_LOOT_TABLE_SEED_FIELD_SRG, "deathLootTableSeed");
+	    			deathLootTableSeed = ObfuscationReflectionHelper.getPrivateValue(EntityLiving.class, (EntityLiving)event.getEntityLiving(), "field_184653_bB", "deathLootTableSeed");
 	    		}
 
 	            if (recentlyHit > 0 && attackingPlayer != null)
@@ -175,25 +208,81 @@ public class LootEventHandler {
     	}
     }
     
-    @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public void onLootTableLoad(LootTableLoadEvent event) {
-    	
-    	LootTable replacement = ExtraFilesManager.loadExtraLootTable(event.getName(), event.getLootTableManager());
-    	
-    	if (replacement != null) {
-    		event.setTable(replacement);
+    @SubscribeEvent(priority=EventPriority.HIGH)
+    public static void onContainerOpen(PlayerContainerEvent.Open event) {
+    	if (!event.getEntityPlayer().world.isRemote) {
+    		
+			//Find the position
+			Vec3d position;
+
+			//Use the position of the block or entity if just interacted
+			if (TILE_ENTITY_INTERACTIONS.containsKey(event.getEntityPlayer())) {
+				position = new Vec3d(TILE_ENTITY_INTERACTIONS.get(event.getEntityPlayer()).getPos()).addVector(0.5, 0, 0.5);
+			} else if (ENTITY_INTERACTIONS.containsKey(event.getEntityPlayer())) {
+				position = ENTITY_INTERACTIONS.get(event.getEntityPlayer()).getPositionVector();
+			} else {
+				position = event.getEntityPlayer().getPositionVector();
+			}
+			
+			List<ItemStack> lootItemsToGenerate = new ArrayList<>();
+			
+    		for (int i = 0; i < event.getContainer().inventoryItemStacks.size(); i++) {
+    			ItemStack stack = event.getContainer().inventoryItemStacks.get(i);
+    			
+				if (stack.getItem() instanceof ItemLoot) {
+					lootItemsToGenerate.add(stack);
+					event.getContainer().putStackInSlot(i, ItemStack.EMPTY);
+				}
+			}
+    		
+    		if (!lootItemsToGenerate.isEmpty()) {
+    			event.getContainer().detectAndSendChanges();
+    		}
+    		
+    		lootItemsToGenerate.forEach(stack -> ((ItemLoot)stack.getItem()).generateLoot(stack, event.getEntityPlayer().world, position));
     	}
+    }
+    
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void recordRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+    	if (!event.getWorld().isRemote) {
+    		TileEntity tile = event.getWorld().getTileEntity(event.getPos());
+    		if (tile != null) {
+    			TILE_ENTITY_INTERACTIONS.put(event.getEntityPlayer(), tile);
+    		}
+    	}
+    }
+    
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void recordRightClickEntity(PlayerInteractEvent.EntityInteract event) {
+    	if (!event.getWorld().isRemote) {
+    		ENTITY_INTERACTIONS.put(event.getEntityPlayer(), event.getTarget());
+    	}
+    }
+    
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent event) {
+    	if (!TILE_ENTITY_INTERACTIONS.isEmpty()) {
+    		TILE_ENTITY_INTERACTIONS.clear();
+    	}
+    	if (!ENTITY_INTERACTIONS.isEmpty()) {
+    		ENTITY_INTERACTIONS.clear();
+    	}
+    }
+    
+    @SubscribeEvent(priority=EventPriority.LOW)
+    public static void onLootTableLoad(LootTableLoadEvent event) {
     	
-    	if (ConfigLoader.enableExtraLootTables && !this.loadingExtras) {
-    		this.loadingExtras = true;
-	    	List<LootTable> extraTables = ExtraFilesManager.loadLootTableExtras(event.getName(), event.getLootTableManager());
+    	if (ConfigLoader.enableExtraLootTables && !loadingExtras && !ConfigLoader.extraLootTableBlacklist.contains(event.getName())) {
+    		loadingExtras = true;
+	    	List<LootTable> extraTables = ExtraLootManager.loadLootTableExtras(event.getName(), event.getLootTableManager());
 	    	
 	    	if (!extraTables.isEmpty()) {
 	    		LootTable table = event.getTable();
 	    		
 	    		if (table != null) {
 	    			for (LootTable extra : extraTables) {
-	    				List<LootPool> pools = ObfuscationReflectionHelper.getPrivateValue(LootTable.class, extra, ObfuscatedNames.POOLS_FIELD_SRG, "pools");
+	    				List<LootPool> pools = ObfuscationReflectionHelper.getPrivateValue(LootTable.class, extra, "field_186466_c", "pools");
 	    				
 	    				for (LootPool pool : pools) {
 	    					table.addPool(pool);
@@ -201,36 +290,9 @@ public class LootEventHandler {
 	    			}
 	    		}
 	    	}
-	    	this.loadingExtras = false;
+	    	loadingExtras = false;
     	}
     	
     }
-    
-    @SubscribeEvent
-    public void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
-    	
-    	if (event.getEntityPlayer().isCreative() && event.getTarget() instanceof EntityVillager) {
-    		if (event.getItemStack().getItem() == ItemTradeEditor.INSTANCE) {
-	    		event.setCancellationResult(EnumActionResult.SUCCESS);
-	    		event.setCanceled(true);
-	    		
-	    		if (event.getEntityPlayer() instanceof EntityPlayerMP) {
-	    			ItemTradeEditor.displayTradeEditorGui((EntityPlayerMP) event.getEntityPlayer(), (EntityVillager) event.getTarget(), event.getItemStack());
-	    		}
-    		} else if (event.getEntityPlayer().getHeldItem(EnumHand.OFF_HAND).getItem() == ItemTradeEditor.INSTANCE) {
-    			event.setCancellationResult(EnumActionResult.PASS);
-	    		event.setCanceled(true);
-    		}
-    	}
-    }
-    
-//    @SubscribeEvent
-//    public void onPlayerLoggedIn(PlayerLoggedInEvent event) {
-//    	
-//    	if (event.player instanceof EntityPlayerMP) {
-//    		ExtraRecipesManager.sendWorldRecipesToClient((EntityPlayerMP) event.player);
-//    	}
-//    	
-//    }
 
 }

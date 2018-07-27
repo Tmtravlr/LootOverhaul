@@ -18,7 +18,6 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
 /**
  * Will pass if the current dimension's 'actual' height is in this height range.
  * 
- * 
  * Example Usage: (looks for 'shorter' dimensions like the Nether, which is 128 blocks tall)
  * "conditions": [
  *  	{

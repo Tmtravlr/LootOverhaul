@@ -19,6 +19,7 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.loot.LootTable;
@@ -110,6 +111,10 @@ public class ItemTriggerLoot extends Item {
 		}
 		
 		return stack;
-
 	}
+	
+	@Override
+    public String getItemStackDisplayName(ItemStack stack) {
+        return super.getItemStackDisplayName(stack) + ((stack.hasTagCompound() && stack.getTagCompound().hasKey("Unwrap")) ? (" " + I18n.translateToLocal("item.triggers.unwrap")) : "");
+    }
 }

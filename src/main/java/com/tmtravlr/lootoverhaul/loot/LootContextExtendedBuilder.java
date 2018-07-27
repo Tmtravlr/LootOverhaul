@@ -26,8 +26,8 @@ public class LootContextExtendedBuilder extends Builder {
     //Broken block specific
     private TileEntity brokenTileEntity;
     private IBlockState brokenState;
-    private int fortune;
-    private boolean silkTouch;
+    private Integer fortune;
+    private Boolean silkTouch;
 	
 	public LootContextExtendedBuilder(WorldServer worldIn) {
 		super(worldIn);

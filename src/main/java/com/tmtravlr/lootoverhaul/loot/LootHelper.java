@@ -1,48 +1,25 @@
 package com.tmtravlr.lootoverhaul.loot;
 
+import javax.annotation.Nullable;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import com.tmtravlr.lootoverhaul.LootOverhaul;
 import com.tmtravlr.lootoverhaul.loot.LootContextExtended.ExtendedEntityTarget;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionBiome;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionBiomeHeight;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionBiomeHumidity;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionBiomeTemp;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionBiomeType;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionBlockState;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionCommand;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionDifficulty;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionDimension;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionDimensionHasSky;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionDimensionHeight;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionDimensionWaterVaporize;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionEntityType;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionEntityVar;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionGlobalVar;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionLightLevel;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionMoon;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionNBTMatches;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionNearBlock;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionNot;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionOr;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionSeeSky;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionSilkTouch;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionToolType;
-import com.tmtravlr.lootoverhaul.loot.conditions.ConditionWeather;
-import com.tmtravlr.lootoverhaul.loot.functions.FunctionDelay;
-import com.tmtravlr.lootoverhaul.loot.functions.FunctionFortuneEnchant;
-import com.tmtravlr.lootoverhaul.loot.functions.FunctionOffset;
-import com.tmtravlr.lootoverhaul.loot.functions.FunctionPosition;
-import com.tmtravlr.lootoverhaul.loot.functions.FunctionReplaceNBT;
+import com.tmtravlr.lootoverhaul.loot.conditions.*;
+import com.tmtravlr.lootoverhaul.loot.functions.*;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Enchantments;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagCompound;
@@ -58,6 +35,7 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.storage.loot.LootContext;
+import net.minecraft.world.storage.loot.LootContext.EntityTarget;
 import net.minecraft.world.storage.loot.conditions.LootConditionManager;
 import net.minecraft.world.storage.loot.functions.LootFunctionManager;
 
@@ -99,6 +77,7 @@ public class LootHelper {
     	LootConditionManager.registerCondition(new ConditionBlockState.Serializer());
     	LootConditionManager.registerCondition(new ConditionSilkTouch.Serializer());
     	LootConditionManager.registerCondition(new ConditionToolType.Serializer());
+    	LootConditionManager.registerCondition(new ConditionRandomChanceWithFortune.Serializer());
 	}
 	
 	public static void loadFuntions() {
@@ -107,6 +86,8 @@ public class LootHelper {
 		LootFunctionManager.registerFunction(new FunctionDelay.Serializer());
 		LootFunctionManager.registerFunction(new FunctionPosition.Serializer());
 		LootFunctionManager.registerFunction(new FunctionOffset.Serializer());
+		LootFunctionManager.registerFunction(new FunctionCustomPotionEffects.Serializer());
+		LootFunctionManager.registerFunction(new FunctionEnchantments.Serializer());
 	}
 	
 	//Helper methods and such for loot
@@ -213,6 +194,7 @@ public class LootHelper {
 	 * @param context LootContext to find the position for
 	 * @return Position of the loot context
 	 */
+    @Nullable
 	public static BlockPos getPosFromContext(LootContext context) {
 		BlockPos pos = null;
 		
@@ -237,19 +219,66 @@ public class LootHelper {
 	 * @param target Extended entity target, which has the vanilla EntityTarget values, plus a few extra
 	 * @return Position of the loot context
 	 */
+    @Nullable
 	public static Entity getEntityFromContext(LootContext context, ExtendedEntityTarget target) {
 		Entity entity = null;
 		
-		if(context instanceof LootContextExtended) {
+		if (context instanceof LootContextExtended) {
 			entity = ((LootContextExtended)context).getEntityExtended(target);
-		}
-		else {
-			if(target.getEntityTarget() != null) {
-				entity = context.getEntity(target.getEntityTarget());
+		} else {
+			if (target.getEntityTargets().length > 0) {
+				for (EntityTarget oldTarget : target.getEntityTargets()) {
+					entity = context.getEntity(oldTarget);
+					if (entity != null) {
+						break;
+					}
+				}
 			}
 		}
 		
 		return entity;
+	}
+
+	/**
+	 * Returns the fortune level of the looter/breaker, if possible.
+	 * @param context LootContext to find the fortune level for
+	 * @return Fortune level of the loot context
+	 */
+	public static int getFortuneModifierFromContext(LootContext context) {
+		int fortune = 0;
+		
+		if (context instanceof LootContextExtended) {
+			fortune = ((LootContextExtended)context).getFortuneModifier();
+		} else {
+			Entity looter = getEntityFromContext(context, ExtendedEntityTarget.LOOTER);
+			
+			if (looter instanceof EntityLivingBase) {
+				fortune = EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, ((EntityLivingBase)looter).getHeldItemMainhand());
+			}
+		}
+		
+		return fortune;
+	}
+
+	/**
+	 * Returns true if the looter/breaker is using silk touch.
+	 * @param context LootContext to find the fortune level for
+	 * @return Fortune level of the loot context
+	 */
+	public static boolean getHasSilkTouchFromContext(LootContext context) {
+		boolean silkTouch = false;
+		
+		if (context instanceof LootContextExtended) {
+			silkTouch = ((LootContextExtended)context).isSilkTouch();
+		} else {
+			Entity looter = getEntityFromContext(context, ExtendedEntityTarget.LOOTER);
+			
+			if (looter instanceof EntityLivingBase) {
+				silkTouch = EnchantmentHelper.getEnchantmentLevel(Enchantments.SILK_TOUCH, ((EntityLivingBase)looter).getHeldItemMainhand()) > 0;
+			}
+		}
+		
+		return silkTouch;
 	}
 	
 	public static class RangeFloat {
@@ -262,10 +291,10 @@ public class LootHelper {
 		}
 		
 		public boolean isInRange(Float toTest) {
-			if(this.min != null && toTest < this.min) {
+			if (this.min != null && toTest < this.min) {
 				return false;
 			}
-			if(this.max != null && toTest > this.max) {
+			if (this.max != null && toTest > this.max) {
 				return false;
 			}
 			
@@ -273,12 +302,12 @@ public class LootHelper {
 		}
 		
 		public void serialize(JsonObject json, String name) {
-			if(this.min != null || this.max != null) {
+			if (this.min != null || this.max != null) {
 	    		JsonObject innerJson = new JsonObject();
-	    		if(this.min != null) {
+	    		if (this.min != null) {
 	    			innerJson.addProperty("min", this.min);
 	    		}
-	    		if(this.max != null) {
+	    		if (this.max != null) {
 	    			innerJson.addProperty("max", this.max);
 	    		}
 	    		json.add(name, innerJson);
@@ -304,15 +333,15 @@ public class LootHelper {
     		min = max = JsonUtils.getFloat(json, name);
     	} else {
 			JsonObject innerJson = JsonUtils.getJsonObject(json, name);
-			if(!JsonUtils.hasField(innerJson, "min") && !JsonUtils.hasField(innerJson, "max")) {
+			if (!JsonUtils.hasField(innerJson, "min") && !JsonUtils.hasField(innerJson, "max")) {
 				throw new JsonSyntaxException(name + ": Expected one or both fields 'min' and 'max'");
 			}
 			
-			if(JsonUtils.hasField(innerJson, "min")) {
+			if (JsonUtils.hasField(innerJson, "min")) {
 				min = JsonUtils.getFloat(innerJson, "min");
 			}
 			
-			if(JsonUtils.hasField(innerJson, "max")) {
+			if (JsonUtils.hasField(innerJson, "max")) {
 				max = JsonUtils.getFloat(innerJson, "max");
 			}
     	}
@@ -328,7 +357,7 @@ public class LootHelper {
 	 */
 	public static String[] deserializeStringArray(JsonObject json, String name) {
 		//Just one argument
-        if(JsonUtils.isString(json, name)) {
+        if (JsonUtils.isString(json, name)) {
         	return new String[]{JsonUtils.getString(json, name)};
         }
         
@@ -337,10 +366,9 @@ public class LootHelper {
         String[] array = new String[jsonArray.size()];
         
         for(int i = 0; i < jsonArray.size(); i++) {
-        	if(jsonArray.get(i).isJsonPrimitive() && jsonArray.get(i).getAsJsonPrimitive().isString()) {
+        	if (jsonArray.get(i).isJsonPrimitive() && jsonArray.get(i).getAsJsonPrimitive().isString()) {
         		array[i] = jsonArray.get(i).getAsString();
-        	}
-        	else {
+        	} else {
         		throw new JsonSyntaxException("Expected '"+name+"' array element to be a string");
         	}
         }
@@ -364,11 +392,10 @@ public class LootHelper {
     	JsonArray jsonArray = JsonUtils.getJsonArray(json, name);
         int[] array = new int[jsonArray.size()];
         
-        for(int i = 0; i < jsonArray.size(); i++) {
-        	if(JsonUtils.isNumber(jsonArray.get(i))) {
+        for (int i = 0; i < jsonArray.size(); i++) {
+        	if (JsonUtils.isNumber(jsonArray.get(i))) {
         		array[i] = jsonArray.get(i).getAsInt();
-        	}
-        	else {
+        	} else {
         		throw new JsonSyntaxException("Expected '"+name+"' array element to be an integer");
         	}
         }
@@ -383,10 +410,9 @@ public class LootHelper {
 	 * @param name Name of the field
 	 */
 	public static void serializeStringArray(String[] array, JsonObject json, String name) {
-		if(array.length == 1) {
+		if (array.length == 1) {
     		json.add(name, new JsonPrimitive(array[0]));
-    	}
-    	else {
+    	} else {
     	
             JsonArray commandList = new JsonArray();
 
@@ -405,10 +431,9 @@ public class LootHelper {
 	 * @param name Name of the field
 	 */
 	public static void serializeIntArray(int[] array, JsonObject json, String name) {
-		if(array.length == 1) {
+		if (array.length == 1) {
     		json.add(name, new JsonPrimitive(array[0]));
-    	}
-    	else {
+    	} else {
     	
             JsonArray commandList = new JsonArray();
 
@@ -441,24 +466,20 @@ public class LootHelper {
     public static NBTBase[] deserializeNBTArray(JsonObject json, String name) {
     	String type = JsonUtils.getString(json, "type");
     	
-    	if(JsonUtils.isJsonArray(json, name)) {
+    	if (JsonUtils.isJsonArray(json, name)) {
     		JsonArray jsonArray = JsonUtils.getJsonArray(json, name);
     		NBTBase[] array = new NBTBase[jsonArray.size()];
             
-            for(int i = 0; i < jsonArray.size(); i++) {
-    	    	if(type.equalsIgnoreCase("string")) {
+            for (int i = 0; i < jsonArray.size(); i++) {
+    	    	if (type.equalsIgnoreCase("string")) {
     	    		array[i] = new NBTTagString(JsonUtils.getString(json, name));
-    	    	}
-    	    	else if(type.equalsIgnoreCase("boolean")) {
+    	    	} else if (type.equalsIgnoreCase("boolean")) {
     	    		array[i] = new NBTTagByte(JsonUtils.getBoolean(json, name) ? (byte)1 : (byte)0);
-    	    	}
-    	    	else if(type.equalsIgnoreCase("integer")) {
+    	    	} else if (type.equalsIgnoreCase("integer")) {
     	    		array[i] = new NBTTagInt(JsonUtils.getInt(json, name));
-    	    	}
-    	    	else if(type.equalsIgnoreCase("float")) {
+    	    	} else if (type.equalsIgnoreCase("float")) {
     	    		array[i] = new NBTTagFloat(JsonUtils.getFloat(json, name));
-    	    	}
-    	    	else {
+    	    	} else {
     	    		throw new JsonSyntaxException(name + ": Unrecognized variable type '" + type + "'. Valid types are 'string', 'boolean', 'integer', and 'float'.");
     	    	}
             }
@@ -466,19 +487,15 @@ public class LootHelper {
             return array;
     	}
     	else {
-	    	if(type.equalsIgnoreCase("string")) {
+	    	if (type.equalsIgnoreCase("string")) {
 	    		return new NBTBase[]{new NBTTagString(JsonUtils.getString(json, name))};
-	    	}
-	    	else if(type.equalsIgnoreCase("boolean")) {
+	    	} else if (type.equalsIgnoreCase("boolean")) {
 	    		return new NBTBase[]{new NBTTagByte(JsonUtils.getBoolean(json, name) ? (byte)1 : (byte)0)};
-	    	}
-	    	else if(type.equalsIgnoreCase("integer")) {
+	    	} else if (type.equalsIgnoreCase("integer")) {
 	    		return new NBTBase[]{new NBTTagInt(JsonUtils.getInt(json, name))};
-	    	}
-	    	else if(type.equalsIgnoreCase("float")) {
+	    	} else if (type.equalsIgnoreCase("float")) {
 	    		return new NBTBase[]{new NBTTagFloat(JsonUtils.getFloat(json, name))};
-	    	}
-	    	else {
+	    	} else {
 	    		throw new JsonSyntaxException(name + ": Unrecognized variable type '" + type + "'. Valid types are 'string', 'boolean', 'integer', and 'float'.");
 	    	}
     	}
@@ -506,19 +523,16 @@ public class LootHelper {
 	    
 	    if(nbtArray.length == 1) {
     		NBTBase nbt = nbtArray[0];
-    		if(nbt instanceof NBTTagString) {
+    		if (nbt instanceof NBTTagString) {
         		json.add(name, new JsonPrimitive(((NBTTagString) nbt).getString()));
             	type = "string";
-        	}
-        	else if(nbt instanceof NBTTagByte) {
+        	} else if (nbt instanceof NBTTagByte) {
         		json.add(name, new JsonPrimitive(((NBTTagByte) nbt).getByte() == 1 ? true : false));
             	type = "boolean";
-        	}
-        	else if(nbt instanceof NBTTagInt) {
+        	} else if (nbt instanceof NBTTagInt) {
         		json.add(name, new JsonPrimitive(((NBTTagInt) nbt).getInt()));
             	type = "integer";
-        	}
-        	else if(nbt instanceof NBTTagFloat) {
+        	} else if (nbt instanceof NBTTagFloat) {
         		json.add(name, new JsonPrimitive(((NBTTagFloat) nbt).getFloat()));
             	type = "float";
         	}
@@ -526,20 +540,17 @@ public class LootHelper {
     	else {
 	    	JsonArray array = new JsonArray();
 	    	
-	    	for(NBTBase nbt : nbtArray) {
-		    	if(nbt instanceof NBTTagString) {
+	    	for (NBTBase nbt : nbtArray) {
+		    	if (nbt instanceof NBTTagString) {
 		    		array.add(new JsonPrimitive(((NBTTagString) nbt).getString()));
 		        	type = "string";
-		    	}
-		    	else if(nbt instanceof NBTTagByte) {
+		    	} else if (nbt instanceof NBTTagByte) {
 		    		array.add(new JsonPrimitive(((NBTTagByte) nbt).getByte() == 1 ? true : false));
 		    		type = "boolean";
-		    	}
-		    	else if(nbt instanceof NBTTagInt) {
+		    	} else if (nbt instanceof NBTTagInt) {
 		    		array.add(new JsonPrimitive(((NBTTagInt) nbt).getInt()));
 		    		type = "integer";
-		    	}
-		    	else if(nbt instanceof NBTTagFloat) {
+		    	} else if (nbt instanceof NBTTagFloat) {
 		    		array.add(new JsonPrimitive(((NBTTagFloat) nbt).getFloat()));
 		    		type = "float";
 		    	}

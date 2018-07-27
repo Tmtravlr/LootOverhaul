@@ -109,7 +109,7 @@ public class ItemLootEffect extends ItemLoot {
 			try {
 				entity = CommandBase.getEntity(world.getMinecraftServer(), world.getMinecraftServer(), entityName);
 			} catch (Exception e) {
-				LootOverhaul.logger.warn("Couldn't find an entity with name, uuid, or selector " + entityName, e);
+				// Swallow exception here because console spam is annoying 
 			}
 			
 			if (entity instanceof EntityLivingBase) {
@@ -140,8 +140,12 @@ public class ItemLootEffect extends ItemLoot {
 	@Override
     public String getItemStackDisplayName(ItemStack stack) {
         String name = super.getItemStackDisplayName(stack);
-        String effectName = stack.hasTagCompound() ? (stack.getTagCompound().hasKey("PotionType", 8) ? stack.getTagCompound().getString("PotionType") : stack.getTagCompound().getString("Potion")) : "";
+        String effectName = stack.hasTagCompound() ? (stack.getTagCompound().hasKey("PotionType", 8) ? stack.getTagCompound().getString("PotionType") : stack.getTagCompound().getString("Potion")) : null;
 
-        return name += effectName;
+        if (effectName != null) {
+        	name += " - " + effectName;
+        }
+        
+        return name;
     }
 }

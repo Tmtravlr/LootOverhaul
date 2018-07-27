@@ -44,7 +44,7 @@ public class ConditionSeeSky implements LootCondition {
 		
 		BlockPos pos = LootHelper.getPosFromContext(context);
 		
-		if((!direct && context.getWorld().canSeeSky(pos)) || context.getWorld().getPrecipitationHeight(pos).getY() <= pos.getY()) {
+		if (pos != null && ((!direct && context.getWorld().canSeeSky(pos)) || context.getWorld().getPrecipitationHeight(pos).getY() <= pos.getY())) {
 			return true;
 		}
 		

@@ -15,21 +15,21 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 
 /**
- * Will pass if the command runs successfully
+ * Will pass if a command runs successfully
  * 
  * Example Usage: (assuming you have a scoreboard objective called deaths)
  * "conditions": [
  *  	{
- *  		"condition": "lootoverhaul:command"
+ *  		"condition": "lootoverhaul:command",
  *  		"command": "testfor @a[r=16,score_deaths_min=100]"
  *  	}
  *  ]
  *  Or you could give it a list of commands: (tests for a player at least level 30 or a creeper nearby)
  *  "conditions": [
  *  	{
- *  		"condition": "lootoverhaul:command"
+ *  		"condition": "lootoverhaul:command",
  *  		"command": [
- *  			"testfor @a[lm=30,r=32]"
+ *  			"testfor @a[lm=30,r=32]",
  *  			"testfor @e[type=minecraft:creeper,r=32]"
  *  		]
  *  	}

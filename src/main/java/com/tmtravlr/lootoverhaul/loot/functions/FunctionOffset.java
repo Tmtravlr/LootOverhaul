@@ -24,7 +24,7 @@ import net.minecraft.world.storage.loot.functions.LootFunction;
  * 
  * Example Usage:
  *  
- *  Offset: Will offset the loot's position to the given position
+ * Offset: Will offset the loot's position to the given position
  * 
  * "functions": [
  *  	{
@@ -33,9 +33,9 @@ import net.minecraft.world.storage.loot.functions.LootFunction;
  *  		"y": 10,
  *  		"z": 10
  *  	}
- *  ]
- *  
- *  Offset: Just offset the y position
+ * ]
+ * 
+ * Offset: Just offset the y position
  * 
  * "functions": [
  *  	{
@@ -45,26 +45,26 @@ import net.minecraft.world.storage.loot.functions.LootFunction;
  *  			"max": 30
  *  		}
  *  	}
- *  ]
- *  
- *  Offset Radius: Offset at a position on a circle with this radius
+ * ]
+ * 
+ * Offset Radius: Offset at a position on a circle with this radius
  * 
  * "functions": [
  *  	{
  *  		"function": "lootoverhaul:offset",
  *  		"radius": 10
  *  	}
- *  ]
- *  
- *  Offset to a surface: Tries to find a solid surface for the loot, checking at most
- *  5 blocks up or down.
+ * ]
+ * 
+ * Offset to a surface: Tries to find a solid surface for the loot, checking at most
+ * 5 blocks up or down.
  * 
  * "functions": [
  *  	{
  *  		"function": "lootoverhaul:offset",
  *  		"surface_search_max": 5
  *  	}
- *  ]
+ * ]
  * 
  * @author Tmtravlr (Rebeca Rey)
  * @since October 2017
@@ -96,25 +96,25 @@ public class FunctionOffset extends LootFunction {
 			stack.setTagCompound(new NBTTagCompound());
 		}
 		
-		NBTTagCompound positionTag = new NBTTagCompound().getCompoundTag("Offset");
+		NBTTagCompound offsetTag = new NBTTagCompound().getCompoundTag("Offset");
 		
 		if (offsetX != null) {
-			positionTag.setDouble("X", positionTag.getDouble("X") + offsetX.generateFloat(rand));
+			offsetTag.setDouble("X", offsetTag.getDouble("X") + offsetX.generateFloat(rand));
 		}
 		if (offsetY != null) {
-			positionTag.setDouble("Y", positionTag.getDouble("Y") + offsetY.generateFloat(rand));
+			offsetTag.setDouble("Y", offsetTag.getDouble("Y") + offsetY.generateFloat(rand));
 		}
 		if (offsetZ != null) {
-			positionTag.setDouble("Z", positionTag.getDouble("Z") + offsetZ.generateFloat(rand));
+			offsetTag.setDouble("Z", offsetTag.getDouble("Z") + offsetZ.generateFloat(rand));
 		}
 		if (offsetRadius != null) {
-			positionTag.setDouble("Radius", positionTag.getDouble("Radius") + offsetRadius.generateFloat(rand));
+			offsetTag.setDouble("Radius", offsetTag.getDouble("Radius") + offsetRadius.generateFloat(rand));
 		}
-		if (surfaceSearchMax != 0) {
-			positionTag.setInteger("SurfaceSearch", surfaceSearchMax);
+		if (surfaceSearchMax >= 0) {
+			offsetTag.setInteger("SurfaceSearch", surfaceSearchMax);
 		}
 		
-		stack.getTagCompound().setTag("Offset", positionTag);
+		stack.getTagCompound().setTag("Offset", offsetTag);
 
         return stack;
 	}
@@ -134,6 +134,12 @@ public class FunctionOffset extends LootFunction {
         	if (value.offsetZ != null) {
         		json.add("z", serializationContext.serialize(value.offsetZ));
         	}
+        	if (value.offsetRadius != null) {
+        		json.add("radius", serializationContext.serialize(value.offsetRadius));
+        	}
+        	if (value.surfaceSearchMax >= 0) {
+        		json.addProperty("surface_search_max", value.surfaceSearchMax);
+        	}
         }
 
         public FunctionOffset deserialize(JsonObject json, JsonDeserializationContext deserializationContext, LootCondition[] conditionsIn) {
@@ -142,7 +148,7 @@ public class FunctionOffset extends LootFunction {
         	RandomValueRange posY = null;
         	RandomValueRange posZ = null;
         	RandomValueRange radius = null;
-        	int surfaceSearchMax = 0;
+        	int surfaceSearchMax = JsonUtils.getInt(json, "surface_search_max", -1);
         	
     		if (json.has("x")) {
     			posX = (RandomValueRange)JsonUtils.deserializeClass(json, "x", deserializationContext, RandomValueRange.class);
@@ -155,9 +161,6 @@ public class FunctionOffset extends LootFunction {
     		}
     		if (json.has("radius")) {
     			radius = (RandomValueRange)JsonUtils.deserializeClass(json, "radius", deserializationContext, RandomValueRange.class);
-    		}
-    		if (json.has("surface_search_max")) {
-    			surfaceSearchMax = JsonUtils.getInt(json, "surface_search_max");
     		}
         	
             return new FunctionOffset(conditionsIn, posX, posY, posZ, radius, surfaceSearchMax);

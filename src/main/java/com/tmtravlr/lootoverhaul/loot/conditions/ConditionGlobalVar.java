@@ -10,10 +10,10 @@ import com.google.gson.JsonSerializationContext;
 import com.tmtravlr.lootoverhaul.LootOverhaul;
 import com.tmtravlr.lootoverhaul.loot.LootHelper;
 import com.tmtravlr.lootoverhaul.loot.LootHelper.RangeFloat;
-import com.tmtravlr.lootoverhaul.misc.SavedData;
-import com.tmtravlr.lootoverhaul.misc.SavedData.StoredVar;
-import com.tmtravlr.lootoverhaul.misc.SavedData.StoredVarFloat;
-import com.tmtravlr.lootoverhaul.misc.SavedData.StoredVarInt;
+import com.tmtravlr.lootoverhaul.utilities.SavedData;
+import com.tmtravlr.lootoverhaul.utilities.SavedData.StoredVar;
+import com.tmtravlr.lootoverhaul.utilities.SavedData.StoredVarFloat;
+import com.tmtravlr.lootoverhaul.utilities.SavedData.StoredVarInt;
 
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.util.JsonUtils;
@@ -67,6 +67,13 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
  *  		"value": true
  *  	}
  *  ]
+ * Or: Check if variable is set
+ * "conditions": [
+ *  	{
+ *  		"condition": "lootoverhaul:global_variable",
+ *  		"name": "player_has_killed_wither"
+ *  	}
+ *  ]
  * 
  * @author Tmtravlr (Rebeca Rey)
  * @since November 2016
@@ -87,7 +94,18 @@ public class ConditionGlobalVar implements LootCondition {
 	
 	@Override
 	public boolean testCondition(Random rand, LootContext context) {
-		StoredVar var = SavedData.getSavedData(context.getWorld().getMinecraftServer().getEntityWorld()).getGlobalVarByType(this.name, this.type);
+		SavedData globalSavedData = SavedData.getSavedData(context.getWorld().getMinecraftServer().getEntityWorld());
+		StoredVar var;
+		
+		if (this.type.isEmpty()) {
+			var = globalSavedData.getGlobalVar(this.name);
+			return var != null;
+		} else if (this.valueRange == null && this.valueList == null) {
+			var = globalSavedData.getGlobalVar(this.name);
+			return var != null && var.getType() == this.type;
+		} else {
+			var = globalSavedData.getGlobalVarByType(this.name, this.type);
+		}
 		
 		if(this.valueRange != null) {
 			if(var instanceof StoredVarFloat) {
@@ -137,13 +155,14 @@ public class ConditionGlobalVar implements LootCondition {
         	NBTBase[] array = null;
         	RangeFloat range = null;
         	
-        	String type = JsonUtils.getString(json, "type");
+        	String type = JsonUtils.getString(json, "type", "");
         	
-        	if((type.equalsIgnoreCase("float") || type.equalsIgnoreCase("integer")) && json.has("value") && json.get("value").isJsonObject()) {
-        		range = LootHelper.deserializeRangeFloat(json, "value");
-        	}
-        	else {
-        		array = LootHelper.deserializeNBTArray(json, "value");
+        	if (!type.isEmpty() && json.has("value")) {
+	        	if ((type.equalsIgnoreCase("float") || type.equalsIgnoreCase("integer")) && json.has("value") && json.get("value").isJsonObject()) {
+	        		range = LootHelper.deserializeRangeFloat(json, "value");
+	        	} else {
+	        		array = LootHelper.deserializeNBTArray(json, "value");
+	        	}
         	}
         	
         	return new ConditionGlobalVar(JsonUtils.getString(json, "name"), type, array, range);

@@ -60,8 +60,8 @@ public class ConditionBiomeTemp implements LootCondition {
 	public boolean testCondition(Random rand, LootContext context) {
 		BlockPos pos = LootHelper.getPosFromContext(context);
 		
-		if(pos != null) {
-			return this.temperature.isInRange(context.getWorld().getBiome(pos).getFloatTemperature(pos));
+		if (pos != null) {
+			return this.temperature.isInRange(context.getWorld().getBiome(pos).getTemperature(pos));
 		}
 		
 		return false;

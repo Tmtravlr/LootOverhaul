@@ -44,18 +44,18 @@ public class ItemLootStructure extends ItemLoot {
 	public static final Item INSTANCE = new ItemLootStructure().setUnlocalizedName("loot_structure").setRegistryName("loot_structure");
 
 	@Override
-	protected void generateSpecificLoot(ItemStack item, World world, Vec3d position) {
+	protected void generateSpecificLoot(ItemStack stack, World world, Vec3d position) {
 		if(world instanceof WorldServer) {
-			if(!item.hasTagCompound()) {
+			if(!stack.hasTagCompound()) {
 				return;
 			}
 
-			String name = item.getTagCompound().getString("Name");
-			String mirrorType = item.getTagCompound().getString("Mirror");
-			String rotationType = item.getTagCompound().getString("Rotation");
-			boolean ignoreEntities = item.getTagCompound().getBoolean("IgnoreEntities");
-			float integrity = item.getTagCompound().hasKey("Integrity") ? item.getTagCompound().getFloat("Integrity") : 1.0f;
-			long seed = item.getTagCompound().hasKey("Seed") ? item.getTagCompound().getLong("Seed") : 0L;
+			String name = stack.getTagCompound().getString("Name");
+			String mirrorType = stack.getTagCompound().getString("Mirror");
+			int rotationType = stack.getTagCompound().getInteger("Rotation");
+			boolean ignoreEntities = stack.getTagCompound().getBoolean("IgnoreEntities");
+			float integrity = stack.getTagCompound().hasKey("Integrity") ? stack.getTagCompound().getFloat("Integrity") : 1.0f;
+			long seed = stack.getTagCompound().hasKey("Seed") ? stack.getTagCompound().getLong("Seed") : 0L;
 
 			Mirror mirror = Mirror.NONE;
 
@@ -67,23 +67,23 @@ public class ItemLootStructure extends ItemLoot {
 					mirror = Mirror.FRONT_BACK;
 				}
 				else if(!mirrorType.equals("none")) {
-					LootOverhaul.logger.warn("Loot Structure", "Mirror type '" + mirrorType + "' not recognized. Valid options are 'none', 'left-right', and 'front-back'."); 
+					LootOverhaul.logger.warn("Loot Structure: Mirror type '" + mirrorType + "' not recognized. Valid options are 'none', 'left-right', and 'front-back'."); 
 				}
 			}
 
 			Rotation rotation = Rotation.NONE;
 
-			if(rotationType.equals("90")) {
+			if(rotationType == 90) {
 				rotation = Rotation.CLOCKWISE_90;
 			}
-			else if(rotationType.equals("180")) {
+			else if(rotationType == 180) {
 				rotation = Rotation.CLOCKWISE_180;
 			}
-			else if(rotationType.equals("270")) {
+			else if(rotationType == 270) {
 				rotation = Rotation.COUNTERCLOCKWISE_90;
 			}
-			else if(!rotationType.equals("0")) {
-				LootOverhaul.logger.warn("Loot Structure", "Rotation " + rotationType + " not accetped. Valid options (in degrees clockwise) are 0, 90, 180, and 270."); 
+			else if(rotationType != 0) {
+				LootOverhaul.logger.warn("Loot Structure: Rotation " + rotationType + " not accetped. Valid options (in degrees clockwise) are 0, 90, 180, and 270."); 
 			}
 
 			BlockPos startPos = new BlockPos(position);

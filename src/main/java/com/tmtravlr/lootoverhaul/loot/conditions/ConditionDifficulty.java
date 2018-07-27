@@ -27,14 +27,14 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
  * Example Usage: (applies if the difficulty is peaceful)
  * "conditions": [
  *  	{
- *  		"condition": "lootoverhaul:difficulty"
- *  		"difficulty": "peaceful"
+ *  		"condition": "lootoverhaul:difficulty",
+ *  		"difficulty": "PEACEFUL"
  *  	}
  *  ]
  *  Or: (applies if the difficulty is greater than easy)
  *  "conditions": [
  *  	{
- *  		"condition": "lootoverhaul:difficulty"
+ *  		"condition": "lootoverhaul:difficulty",
  *  		"difficulty": [
  *  			"normal",
  *  			"hard",
@@ -45,7 +45,7 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
  *  Or: (checks for regional difficulty of at least 2)
  *  "conditions": [
  *  	{
- *  		"condition": "lootoverhaul:difficulty"
+ *  		"condition": "lootoverhaul:difficulty",
  *  		"regional": {
  *  			"min": 2.0
  *  		}
@@ -68,26 +68,24 @@ public class ConditionDifficulty implements LootCondition {
 	@Override
 	public boolean testCondition(Random rand, LootContext context) {
 		BlockPos pos = LootHelper.getPosFromContext(context);
-		String global = context.getWorld().getWorldInfo().isHardcoreModeEnabled() ? "hardcore" : 
-			context.getWorld().getDifficulty() == EnumDifficulty.PEACEFUL ? "peaceful" : 
-			context.getWorld().getDifficulty() == EnumDifficulty.EASY ? "easy" : 
-			context.getWorld().getDifficulty() == EnumDifficulty.NORMAL ? "normal" : 
-			context.getWorld().getDifficulty() == EnumDifficulty.HARD ? "hard" : 
-			context.getWorld().getDifficulty().toString().toLowerCase();
+		String globalDifficulty = context.getWorld().getDifficulty().name().toLowerCase();
 		
 		float currentAdditional = 0.0f;
 		
-		if(pos != null) {
+		if (pos != null) {
 			currentAdditional = context.getWorld().getDifficultyForLocation(pos).getAdditionalDifficulty();
 		}
 		
-		for(String difficulty : difficulties) {
-			if(global.equalsIgnoreCase(difficulty)) {
+		for (String difficulty : difficulties) {
+			if (context.getWorld().getWorldInfo().isHardcoreModeEnabled() && difficulty.equalsIgnoreCase("hardcore")) {
+				return true;
+			}
+			if (globalDifficulty.equalsIgnoreCase(difficulty)) {
 				return true;
 			}
 		}
 		
-		if(additional.min != null || additional.max != null) {
+		if (additional.min != null || additional.max != null) {
 			return additional.isInRange(currentAdditional);
 		}
 		
@@ -102,27 +100,27 @@ public class ConditionDifficulty implements LootCondition {
         }
 
         public void serialize(JsonObject json, ConditionDifficulty value, JsonSerializationContext context) {
-        	if(value.difficulties.length > 0) {
+        	if (value.difficulties.length > 0) {
         		LootHelper.serializeStringArray(value.difficulties, json, "difficulty");
         	}
         	
-        	if(value.additional.min != null && value.additional.max != null) {
+        	if (value.additional.min != null && value.additional.max != null) {
         		value.additional.serialize(json, "regional");
         	}
         }
 
         public ConditionDifficulty deserialize(JsonObject json, JsonDeserializationContext context) {
-        	if(!JsonUtils.hasField(json, "difficulty") && !JsonUtils.hasField(json, "regional")) {
+        	if (!JsonUtils.hasField(json, "difficulty") && !JsonUtils.hasField(json, "regional")) {
         		throw new JsonSyntaxException("Expected one or both fields 'difficulty' and 'regional'");
         	}
         	
         	String[] difficulties = new String[0];
         	RangeFloat regional = new RangeFloat(null, null);
         	
-        	if(JsonUtils.hasField(json, "difficulty")) {
+        	if (JsonUtils.hasField(json, "difficulty")) {
         		difficulties = LootHelper.deserializeStringArray(json, "difficulty");
         	}
-        	if(JsonUtils.hasField(json, "regional")) {
+        	if (JsonUtils.hasField(json, "regional")) {
         		regional = LootHelper.deserializeRangeFloat(json, "regional");
         	}
         	

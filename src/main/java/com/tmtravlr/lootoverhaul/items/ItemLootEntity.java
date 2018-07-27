@@ -24,6 +24,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.storage.AnvilChunkLoader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -66,111 +67,41 @@ public class ItemLootEntity extends ItemLoot {
 	public static final Item INSTANCE = new ItemLootEntity().setUnlocalizedName("loot_entity").setRegistryName("loot_entity");
 
 	@Override
-	protected void generateSpecificLoot(ItemStack item, World world, Vec3d position) {
-		ResourceLocation entityName = getEntityIdFromItem(item);
-		
-		if (entityName == null) {
-			LootOverhaul.logger.warn("Skipping invalid loot entity id: " + entityName);
+	protected void generateSpecificLoot(ItemStack stack, World world, Vec3d position) {
+
+		if (!stack.hasTagCompound() || stack.getSubCompound("EntityTag") == null || !stack.getSubCompound("EntityTag").hasKey("id")) {
+			LootOverhaul.logger.warn("Skipping invalid loot entity: " + stack.getTagCompound());
 			return;
 		}
-		
-		Entity entity = spawnCreature(world, entityName, position.x, position.y, position.z);
-		
+    	
+        Entity entity = AnvilChunkLoader.readWorldEntityPos(stack.getSubCompound("EntityTag"), world, position.x, position.y, position.z, true);
+        
 		if (entity == null) {
-			LootOverhaul.logger.warn("Skipping invalid loot entity: " + item.getTagCompound());
+			LootOverhaul.logger.warn("Unable to spawn loot entity: " + stack.getSubCompound("EntityTag"));
 			return;
+		}
+        
+        if (entity instanceof EntityLiving) {
+			((EntityLiving)entity).playLivingSound();
 		}
 
-		applyItemEntityDataToEntity(world, item, entity);
+        if (stack.getTagCompound().hasKey("Motion", 10)) {
+			NBTTagCompound motionTag = stack.getTagCompound().getCompoundTag("Motion");
+			entity.motionX = motionTag.getInteger("X");
+			entity.motionY = motionTag.getInteger("Y");
+			entity.motionZ = motionTag.getInteger("Z");
+		}
 	}
 
+	@Override
     public String getItemStackDisplayName(ItemStack stack) {
         String name = super.getItemStackDisplayName(stack);
-        ResourceLocation entityName = getEntityIdFromItem(stack);
 
-        if (entityName != null) {
-            name += entityName;
+        if (stack.getSubCompound("EntityTag") != null) {
+            name += " - " + stack.getSubCompound("EntityTag").getString("id");
         }
 
         return name;
     }
-
-	/**
-	 * Spawns the creature specified by the egg's type in the location specified by the last three parameters.
-	 * Parameters: world, entityID, x, y, z.
-	 */
-	@Nullable
-	public static Entity spawnCreature(World worldIn, ResourceLocation entityID, double x, double y, double z) {
-		Entity entity = null;
-		EntityLiving entityliving = null;
-
-		entity = EntityList.createEntityByIDFromName(entityID, worldIn);
-
-		entity.setLocationAndAngles(x, y, z, MathHelper.wrapDegrees(worldIn.rand.nextFloat() * 360.0F), 0.0F);
-
-		if (entity instanceof EntityLiving) {
-			entityliving = (EntityLiving)entity;
-			entityliving.rotationYawHead = entityliving.rotationYaw;
-			entityliving.renderYawOffset = entityliving.rotationYaw;
-			entityliving.onInitialSpawn(worldIn.getDifficultyForLocation(new BlockPos(entityliving)), (IEntityLivingData)null);
-		}
-
-		worldIn.spawnEntity(entity);
-
-		if(entityliving != null) {
-			entityliving.playLivingSound();
-		}
-
-		return entity;
-	}
-
-	/**
-	 * Gets the entity ID associated with a given ItemStack in its NBT data.
-	 */
-	@Nullable
-	public static ResourceLocation getEntityIdFromItem(ItemStack stack) {
-		NBTTagCompound tag = stack.getTagCompound();
-
-		if (tag == null)
-		{
-			return null;
-		}
-		else if (!tag.hasKey("EntityTag", 10))
-		{
-			return null;
-		}
-		else
-		{
-			NBTTagCompound entityTag = tag.getCompoundTag("EntityTag");
-			return !entityTag.hasKey("id", 8) ? null : new ResourceLocation(entityTag.getString("id"));
-		}
-	}
-
-	/**
-	 * Applies the data in the EntityTag tag of the given ItemStack to the given Entity.
-	 */
-	public static void applyItemEntityDataToEntity(World entityWorld, ItemStack stack, @Nullable Entity targetEntity) {
-		MinecraftServer minecraftserver = entityWorld.getMinecraftServer();
-
-		if (minecraftserver != null && targetEntity != null)  {
-			NBTTagCompound tag = stack.getTagCompound();
-
-			if (tag != null && tag.hasKey("EntityTag", 10)) {
-
-				NBTTagCompound currentTag = targetEntity.writeToNBT(new NBTTagCompound());
-				UUID uuid = targetEntity.getUniqueID();
-				currentTag.merge(tag.getCompoundTag("EntityTag"));
-				targetEntity.setUniqueId(uuid);
-				targetEntity.readFromNBT(currentTag);
-				
-				if (tag.hasKey("Motion", 10)) {
-					NBTTagCompound motionTag = tag.getCompoundTag("Motion");
-					targetEntity.motionX = motionTag.getInteger("X");
-					targetEntity.motionY = motionTag.getInteger("Y");
-					targetEntity.motionZ = motionTag.getInteger("Z");
-				}
-			}
-		}
-	}
 
 }
