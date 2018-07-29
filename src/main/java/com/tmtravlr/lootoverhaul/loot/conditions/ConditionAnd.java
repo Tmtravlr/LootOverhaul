@@ -89,7 +89,7 @@ public class ConditionAnd implements LootCondition {
             for(int i = 0; i < conditionArray.size(); i++) {
             	if(conditionArray.get(i).isJsonObject() && conditionArray.get(i).getAsJsonObject().get("condition").isJsonPrimitive() && conditionArray.get(i).getAsJsonObject().get("condition").getAsJsonPrimitive().isString()) {
             		
-            		conditionList[i] = LootConditionManager.getSerializerForName(new ResourceLocation(conditionArray.get(i).getAsJsonObject().get("condition").getAsString())).deserialize(conditionArray.get(i).getAsJsonObject(), context);
+            		conditionList[i] = LootConditionManager.getSerializerForName(new ResourceLocation(JsonUtils.getString(conditionArray.get(i).getAsJsonObject(), "condition"))).deserialize(conditionArray.get(i).getAsJsonObject(), context);
             	}
             }
 

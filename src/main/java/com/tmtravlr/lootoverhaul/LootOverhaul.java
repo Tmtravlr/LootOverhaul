@@ -9,6 +9,7 @@ import com.tmtravlr.lootoverhaul.network.CToSMessage;
 import com.tmtravlr.lootoverhaul.network.PacketHandlerClient;
 import com.tmtravlr.lootoverhaul.network.PacketHandlerServer;
 import com.tmtravlr.lootoverhaul.network.SToCMessage;
+import com.tmtravlr.lootoverhaul.utilities.ConfigIdFileGenerator;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;

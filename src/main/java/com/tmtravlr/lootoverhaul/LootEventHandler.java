@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.tmtravlr.lootoverhaul.items.ItemLoot;
 import com.tmtravlr.lootoverhaul.items.ItemLootBlock;
@@ -60,8 +61,8 @@ import net.minecraftforge.registries.IForgeRegistry;
 public class LootEventHandler {
 	
 	private static boolean loadingExtras = false;
-	private static final Map<EntityPlayer, TileEntity> TILE_ENTITY_INTERACTIONS = new HashMap<>();
-	private static final Map<EntityPlayer, Entity> ENTITY_INTERACTIONS = new HashMap<>();
+	private static final Map<EntityPlayer, TileEntity> TILE_ENTITY_INTERACTIONS = new ConcurrentHashMap<>();
+	private static final Map<EntityPlayer, Entity> ENTITY_INTERACTIONS = new ConcurrentHashMap<>();
 	
 	@SubscribeEvent
 	public static void onRegisterItems(RegistryEvent.Register<Item> event) {
@@ -224,6 +225,7 @@ public class LootEventHandler {
 				position = event.getEntityPlayer().getPositionVector();
 			}
 			
+			//Generate loot from the entity or container just interacted with
 			List<ItemStack> lootItemsToGenerate = new ArrayList<>();
 			
     		for (int i = 0; i < event.getContainer().inventoryItemStacks.size(); i++) {

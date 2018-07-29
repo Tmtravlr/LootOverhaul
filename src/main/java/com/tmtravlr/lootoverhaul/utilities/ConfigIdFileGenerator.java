@@ -1,4 +1,4 @@
-package com.tmtravlr.lootoverhaul;
+package com.tmtravlr.lootoverhaul.utilities;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import com.tmtravlr.lootoverhaul.ConfigLoader;
+import com.tmtravlr.lootoverhaul.LootOverhaul;
 
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;

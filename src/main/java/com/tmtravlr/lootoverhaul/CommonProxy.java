@@ -9,17 +9,4 @@ public class CommonProxy {
 
 	public void registerRenderers() {}
 	
-	public void registerEventHandlers() {
-		MinecraftForge.EVENT_BUS.register(new LootEventHandler());
-	}
-	
-	public void callFromMainThread(Runnable runnable) {
-		MinecraftServer mcServer = FMLCommonHandler.instance().getMinecraftServerInstance();
-		if (mcServer != null) {
-			mcServer.addScheduledTask(runnable);
-		}
-	}
-	
-	public void displayTradeEditor(int id, int villagerId, NBTTagCompound villagerTag) {}
-	
 }

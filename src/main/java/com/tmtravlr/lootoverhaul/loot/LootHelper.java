@@ -88,6 +88,7 @@ public class LootHelper {
 		LootFunctionManager.registerFunction(new FunctionOffset.Serializer());
 		LootFunctionManager.registerFunction(new FunctionCustomPotionEffects.Serializer());
 		LootFunctionManager.registerFunction(new FunctionEnchantments.Serializer());
+		LootFunctionManager.registerFunction(new FunctionGroup.Serializer());
 	}
 	
 	//Helper methods and such for loot
