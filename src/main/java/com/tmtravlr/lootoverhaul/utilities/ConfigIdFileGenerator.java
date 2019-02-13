@@ -44,7 +44,7 @@ public class ConfigIdFileGenerator {
 		File itemIds = new File(ConfigLoader.idFolder, "Item IDs.txt");
 		File blockIds = new File(ConfigLoader.idFolder, "Block IDs.txt");
 		File biomeIds = new File(ConfigLoader.idFolder, "Biome IDs.txt");
-		File dimensionIds = new File(ConfigLoader.configFolder, "Dimension IDs.txt");
+		File dimensionIds = new File(ConfigLoader.idFolder, "Dimension IDs.txt");
 		File entityIds = new File(ConfigLoader.idFolder, "Entity IDs.txt");
 		File potionIds = new File(ConfigLoader.idFolder, "Potion IDs.txt");
 		File potionTypeIds = new File(ConfigLoader.idFolder, "Potion Type IDs.txt");

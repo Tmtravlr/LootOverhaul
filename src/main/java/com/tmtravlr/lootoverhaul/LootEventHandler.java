@@ -124,33 +124,35 @@ public class LootEventHandler {
     	if (!(ConfigLoader.enableBlockDrops && event.getWorld() instanceof WorldServer)) {
     		return;
     	}
-    	
-    	ResourceLocation blockLootResource = BlockLootManager.getBlockDropLootTable(event.getWorld(), event.getPos(), event.getState());
     	Random rand = BlockLootManager.getRandom(event.getWorld(), event.getPos(), event.getState());
     	
-    	if (blockLootResource != null) {
-	    	LootTable lootTable = event.getWorld().getLootTableManager().getLootTableFromLocation(blockLootResource);
+    	if (!ConfigLoader.useBlockDropWhitelist || ConfigLoader.blockDropsToReplace.contains(event.getState().getBlock().getRegistryName())) {
+	    	ResourceLocation blockLootResource = BlockLootManager.getBlockDropLootTable(event.getWorld(), event.getPos(), event.getState());
 	    	
-	    	if (lootTable != null) {
-		    	LootContextExtendedBuilder builder = new LootContextExtendedBuilder((WorldServer)event.getWorld()).withBrokenState(event.getState()).withFortune(event.getFortuneLevel()).withSilkTouch(event.isSilkTouching());
+	    	if (blockLootResource != null) {
+		    	LootTable lootTable = event.getWorld().getLootTableManager().getLootTableFromLocation(blockLootResource);
 		    	
-		    	if (event.getWorld().getTileEntity(event.getPos()) != null) {
-		    		builder.withBrokenTileEntity(event.getWorld().getTileEntity(event.getPos()));
-		    	}
-		    	
-		    	if (event.getHarvester() != null) {
-		    		builder.withLooter(event.getHarvester()).withLuck(event.getHarvester().getLuck());
-		    	}
-		    	
-		    	List<ItemStack> lootList = lootTable.generateLootForPools(rand, builder.build());
-		    	
-		    	if (!lootList.isEmpty()) {
-		    		event.getDrops().clear();
-		    		
-			    	for (ItemStack stack : lootList) {
-			    		if (!stack.isEmpty()) {
-			                event.getDrops().add(stack);
-			            }
+		    	if (lootTable != null) {
+			    	LootContextExtendedBuilder builder = new LootContextExtendedBuilder((WorldServer)event.getWorld()).withBrokenState(event.getState()).withFortune(event.getFortuneLevel()).withSilkTouch(event.isSilkTouching());
+			    	
+			    	if (event.getWorld().getTileEntity(event.getPos()) != null) {
+			    		builder.withBrokenTileEntity(event.getWorld().getTileEntity(event.getPos()));
+			    	}
+			    	
+			    	if (event.getHarvester() != null) {
+			    		builder.withLooter(event.getHarvester()).withLuck(event.getHarvester().getLuck());
+			    	}
+			    	
+			    	List<ItemStack> lootList = lootTable.generateLootForPools(rand, builder.build());
+			    	
+			    	if (!lootList.isEmpty()) {
+			    		event.getDrops().clear();
+			    		
+				    	for (ItemStack stack : lootList) {
+				    		if (!stack.isEmpty()) {
+				                event.getDrops().add(stack);
+				            }
+				    	}
 			    	}
 		    	}
 	    	}
