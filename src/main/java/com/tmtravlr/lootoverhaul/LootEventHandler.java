@@ -1,12 +1,15 @@
 package com.tmtravlr.lootoverhaul;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.google.common.io.Files;
 import com.tmtravlr.lootoverhaul.items.ItemLoot;
 import com.tmtravlr.lootoverhaul.items.ItemLootBlock;
 import com.tmtravlr.lootoverhaul.items.ItemLootCommand;
@@ -19,6 +22,7 @@ import com.tmtravlr.lootoverhaul.items.ItemTriggerCommand;
 import com.tmtravlr.lootoverhaul.items.ItemTriggerLoot;
 import com.tmtravlr.lootoverhaul.loot.BlockLootManager;
 import com.tmtravlr.lootoverhaul.loot.ExtraLootManager;
+import com.tmtravlr.lootoverhaul.loot.ExtraLootManager.LoadLootTableExtrasEvent;
 import com.tmtravlr.lootoverhaul.loot.LootContextExtendedBuilder;
 import com.tmtravlr.lootoverhaul.loot.LootHelper;
 import com.tmtravlr.lootoverhaul.utilities.SavedData;
@@ -38,7 +42,8 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootPool;
 import net.minecraft.world.storage.loot.LootTable;
-import net.minecraftforge.client.event.GuiContainerEvent;
+import net.minecraft.world.storage.loot.LootTableManager;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.LootTableLoadEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -294,9 +299,15 @@ public class LootEventHandler {
 	    			}
 	    		}
 	    	}
+	    	
 	    	loadingExtras = false;
     	}
     	
+    }
+    
+    @SubscribeEvent
+    public static void onLootTableExtrasLoad(LoadLootTableExtrasEvent event) {
+		ExtraLootManager.loadDefaultLootTableExtras(event);
     }
 
 }
